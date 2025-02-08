@@ -42,8 +42,8 @@ export async function GET(request: Request) {
       // Ask eugene what to add for types
       // Hold current player, blue team, and red team
       let currentPlayer = {};
-      const blueTeam: any = [];
-      const redTeam: any = [];
+      const blueTeam = [];
+      const redTeam = [];
 
       const participants = details.response.participants;
 
