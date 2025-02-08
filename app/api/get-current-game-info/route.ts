@@ -51,7 +51,7 @@ export async function GET(request: Request) {
         const participantName = participant.riotId.split("#");
         // Need to replace with dynamic URL? Ask eugene
         const participantResponse = await fetch(
-          ` http://localhost:3000/api/get-player?riotId=${participantName[0]}&tag=${participantName[1]}`
+          `http://localhost:3000/api/get-player?riotId=${participantName[0]}&tag=${participantName[1]}`
         );
         const participantData = await participantResponse.json();
 
