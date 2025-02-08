@@ -39,7 +39,6 @@ export async function GET(request: Request) {
         Constants.Regions.AMERICA_NORTH
       );
 
-      // Ask eugene what to add for types
       // Hold current player, blue team, and red team
       let currentPlayer = {};
       const blueTeam = [];
