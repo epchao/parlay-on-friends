@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { RiotApi, LolApi, Constants } from "twisted";
-import { fetchPlayerData } from "../get-player/route";
+import { fetchPlayerData } from "../get-player/fetchPlayerData";
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
