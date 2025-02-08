@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { RiotApi, LolApi, Constants } from "twisted";
+import { fetchPlayerData } from "../get-player/route";
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
@@ -44,15 +45,23 @@ export async function GET(request: Request) {
       const blueTeam = [];
       const redTeam = [];
 
+      // List of partcipants from Riot API
       const participants = details.response.participants;
 
+      // Assign each participant into respective group
       for (const participant of participants) {
         const participantName = participant.riotId.split("#");
-        // Need to replace with dynamic URL? Ask eugene
-        const participantResponse = await fetch(
-          `http://localhost:3000/api/get-player?riotId=${participantName[0]}&tag=${participantName[1]}`
+        const participantData = await fetchPlayerData(
+          participantName[0],
+          participantName[1]
         );
-        const participantData = await participantResponse.json();
+
+        if ("error" in participantData) {
+          return NextResponse.json(
+            { error: "Error finding all players" },
+            { status: 404 }
+          );
+        }
 
         if (participant.puuid === currentPlayerPuuid) {
           currentPlayer = participantData;
@@ -69,7 +78,6 @@ export async function GET(request: Request) {
         redTeam,
       };
 
-      // Return details
       return NextResponse.json(gameInfo);
     } catch (error: any) {
       // Catch 404 error (player not in a game)

@@ -1,37 +1,39 @@
-import { NextResponse } from 'next/server';
-import { RiotApi, LolApi, Constants } from 'twisted';
-import { Player } from '../../../interfaces/player';
+import { NextResponse } from "next/server";
+import { RiotApi, LolApi, Constants } from "twisted";
+import { Player } from "../../../interfaces/player";
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const riotId = searchParams.get("riotId");
-  const tag = searchParams.get("tag");
-
-  if (!riotId || !tag) {
-    return NextResponse.json({ error: 'Missing riotId or tag' }, { status: 400 });
-  }
-
+export async function fetchPlayerData(riotId: string, tag: string) {
   try {
-    const account = await riotApi.Account.getByRiotId(riotId as string, tag as string, Constants.RegionGroups.AMERICAS);
+    const account = await riotApi.Account.getByRiotId(
+      riotId as string,
+      tag as string,
+      Constants.RegionGroups.AMERICAS
+    );
     if (!account.response.puuid) {
-      return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+      return { error: "Player not found", status: 404 };
     }
-    const summoner = await lolApi.Summoner.getByPUUID(account.response.puuid, Constants.Regions.AMERICA_NORTH);
-    const rankedData = await lolApi.League.bySummoner(summoner.response.id, Constants.Regions.AMERICA_NORTH);
+    const summoner = await lolApi.Summoner.getByPUUID(
+      account.response.puuid,
+      Constants.Regions.AMERICA_NORTH
+    );
+    const rankedData = await lolApi.League.bySummoner(
+      summoner.response.id,
+      Constants.Regions.AMERICA_NORTH
+    );
 
-    let soloDuoRank = 'Unranked';
-    let soloDuoRankImage = '';
-    let flexRank = 'Unranked';
-    let flexRankImage = '';
+    let soloDuoRank = "Unranked";
+    let soloDuoRankImage = "";
+    let flexRank = "Unranked";
+    let flexRankImage = "";
 
     rankedData.response.forEach((queue) => {
-      if (queue.queueType === 'RANKED_SOLO_5x5') {
+      if (queue.queueType === "RANKED_SOLO_5x5") {
         soloDuoRank = `${queue.tier} ${queue.rank}`;
         soloDuoRankImage = `https://opgg-static.akamaized.net/images/medals_new/${queue.tier.toLowerCase()}.png`;
-      } else if (queue.queueType === 'RANKED_FLEX_SR') {
+      } else if (queue.queueType === "RANKED_FLEX_SR") {
         flexRank = `${queue.tier} ${queue.rank}`;
         flexRankImage = `https://opgg-static.akamaized.net/images/medals_new/${queue.tier.toLowerCase()}.png`;
       }
@@ -48,15 +50,40 @@ export async function GET(request: Request) {
       soloDuoRankImage,
       flexRank,
       flexRankImage,
-      champion: 'Lee Sin',
-      championImage: 'https://ddragon.leagueoflegends.com/cdn/14.1.1/img/champion/LeeSin.png',
+      champion: "Lee Sin",
+      championImage:
+        "https://ddragon.leagueoflegends.com/cdn/14.1.1/img/champion/LeeSin.png",
       avgKda: 3.5, // Placeholder
       avgCs: 200, // Placeholder
     };
 
-    return NextResponse.json(playerData);
+    return playerData;
   } catch (error) {
     console.error("Error fetching player data:", error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return { error: "Internal Server Error", status: 500 };
   }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const riotId = searchParams.get("riotId");
+  const tag = searchParams.get("tag");
+
+  if (!riotId || !tag) {
+    return NextResponse.json(
+      { error: "Missing riotId or tag" },
+      { status: 400 }
+    );
+  }
+
+  const playerData = await fetchPlayerData(riotId, tag);
+
+  if ("error" in playerData) {
+    return NextResponse.json(
+      { error: playerData.error },
+      { status: playerData.status }
+    );
+  }
+
+  return NextResponse.json(playerData);
 }
