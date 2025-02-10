@@ -52,6 +52,19 @@ export async function GET(request: Request) {
         Constants.Regions.AMERICA_NORTH
       );
 
+      // Check not RANKED
+      // 420 = solo duo
+      // 440 = flex
+      if (
+        details.response.gameQueueConfigId !== 420 ||
+        details.response.gameQueueConfigId !== 440
+      ) {
+        return NextResponse.json(
+          { error: "Player not currently playing a ranked match" },
+          { status: 404 }
+        );
+      }
+
       // Get game time
       const gameTime = calculateGameTime(details.response.gameStartTime);
 
