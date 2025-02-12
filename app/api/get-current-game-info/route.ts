@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
     // If no response
     if (!account.response.puuid) {
-      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+      return NextResponse.json({ error: "Player not found" });
     }
 
     // Get PUUID from account details
@@ -56,13 +56,13 @@ export async function GET(request: Request) {
       // 420 = solo duo
       // 440 = flex
       if (
-        details.response.gameQueueConfigId !== 420 ||
+        details.response.gameQueueConfigId !== 420 &&
         details.response.gameQueueConfigId !== 440
       ) {
-        return NextResponse.json(
-          { error: "Player not currently playing a ranked match" },
-          { status: 404 }
-        );
+        console.log(details.response.gameQueueConfigId);
+        return NextResponse.json({
+          error: "Player not currently playing a ranked match",
+        });
       }
 
       // Get game time
@@ -101,13 +101,18 @@ export async function GET(request: Request) {
           redTeam.push(participantData);
         }
       }
+      const allyColor = currentPlayerTeam === 100 ? "blue" : "red";
+      const enemyColor = allyColor === "blue" ? "red" : "blue";
+
       const allies = currentPlayerTeam === 100 ? blueTeam : redTeam;
       const enemies = currentPlayerTeam === 100 ? redTeam : blueTeam;
 
       const gameInfo = {
         gameTime,
         currentPlayer,
+        allyColor,
         allies,
+        enemyColor,
         enemies,
       };
 
@@ -115,10 +120,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
       // Catch 404 error (player not in a game)
       if (error.status === 404) {
-        return NextResponse.json(
-          { error: "Player not in game" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Player not in game" });
       }
       // Other errors
       console.error("Error fetching game data:", error);
