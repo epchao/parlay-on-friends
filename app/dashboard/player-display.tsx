@@ -3,7 +3,6 @@
 import { Player } from "@/interfaces/player";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { allies, enemies } from "./mock-player-display-data";
 
 interface PlayerDisplayProps {
   name: string;
@@ -11,21 +10,65 @@ interface PlayerDisplayProps {
 }
 
 const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
-  const [time, setTime] = useState("00:00");
+  // States for game data
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
+  const [allies, setAllies] = useState<Player[]>([]);
+  const [allyColor, setAllyColor] = useState("");
+  const [enemies, setEnemies] = useState<Player[]>([]);
+  const [time, setTime] = useState("00:00");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Function to create JSX for teams
+  const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
+    let updatedTeam = [...team];
+
+    if (currentPlayer && isCurrentInTeam) {
+      updatedTeam = [currentPlayer, ...team];
+    }
+
+    return updatedTeam.map((player: Player, index) => (
+      <tr key={index}>
+        <td>{player.name}</td>
+        <td>{player.champion}</td>
+        <td>{player.avgKda.toFixed(2)}</td>
+        <td>{player.avgCs.toFixed(2)}</td>
+        <td>{player.soloDuoRank}</td>
+      </tr>
+    ));
+  };
 
   useEffect(() => {
     // @TODO: Ensure that if the current player isn't in game, then nothing will load.
     const fetchPlayer = async () => {
       try {
-        const response = await fetch(`/api/get-player?riotId=${name}&tag=${tag}`);
+        const response = await fetch(
+          `/api/get-current-game-info?riotId=${name}&tag=${tag}`
+        );
         if (!response.ok) {
-          throw new Error('Player not found or API error');
+          throw new Error("Player not found or API error");
         }
-        const data: Player = await response.json();
-        setCurrentPlayer(data);
+        const data = await response.json();
+        console.log(data);
+
+        if (data.error === "Player not in game") {
+          setError("This player is currently not in game.");
+          return;
+        } else if (
+          data.error === "Player not currently playing a ranked match"
+        ) {
+          setError("This player is not playing a ranked match.");
+          return;
+        } else if (data.error === "Player not found") {
+          setError("This player does not exist");
+          return;
+        }
+        setCurrentPlayer(data.currentPlayer);
+        setTime(data.gameTime);
+        setAllyColor(data.allyColor);
+        setAllies(data.allies);
+        setEnemies(data.enemies);
       } catch (err) {
         setError("Error fetching player data");
         console.error(err);
@@ -36,10 +79,6 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
     fetchPlayer();
   }, [name, tag]);
-
-  useEffect(() => {
-    setTime("19:00");
-  }, []);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -59,9 +98,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             <Image
               src={currentPlayer.icon!}
               alt="icon"
-              width={100}
-              height={100}
-              className="h-16 rounded-lg"
+              width={300}
+              height={300}
+              className="size-20 rounded-lg"
             />
             <div className="flex flex-col">
               <p>
@@ -75,13 +114,15 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             <div className="text-xs sm:text-sm flex flex-col items-center lg:text-base lg:w-full">
               <p className="lg:bg-gray-800 lg:w-full lg:p-4">Solo/Duo</p>
               <div className="lg:flex lg:flex-col lg:justify-center">
-                <Image
-                  src={currentPlayer.soloDuoRankImage!}
-                  alt="Rank"
-                  width={100}
-                  height={100}
-                  className="m-4 h-12 lg:h-16"
-                />
+                {currentPlayer.soloDuoRankImage && (
+                  <Image
+                    src={currentPlayer.soloDuoRankImage!}
+                    alt="Rank"
+                    width={128}
+                    height={128}
+                    className="m-4 size-16 lg:size-24"
+                  />
+                )}
                 <p>{currentPlayer.soloDuoRank}</p>
               </div>
             </div>
@@ -89,13 +130,15 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             <div className="text-xs sm:text-sm flex flex-col items-center lg:text-base lg:w-full">
               <p className="lg:bg-gray-800 lg:w-full lg:p-4">Flex</p>
               <div className="lg:flex lg:flex-col lg:justify-center">
-                <Image
-                  src={currentPlayer.flexRankImage!}
-                  alt="Rank"
-                  width={100}
-                  height={100}
-                  className="m-4 h-12 lg:h-16"
-                />
+                {currentPlayer.flexRankImage && (
+                  <Image
+                    src={currentPlayer.flexRankImage!}
+                    alt="Rank"
+                    width={128}
+                    height={128}
+                    className="m-4 size-16 lg:size-24"
+                  />
+                )}
                 <p>{currentPlayer.flexRank}</p>
               </div>
             </div>
@@ -104,13 +147,13 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         {/* Champ Image + Game Meta Data Container */}
         <section className="bg-neutral-400 rounded-3xl h-auto w-[100%] lg:h-[40rem] lg:w-4/6 lg:flex lg:flex-col">
           {/* Champ Image */}
-          <div className="flex-1 h-24 lg:h-48">
+          <div className="flex-1 h-24 lg:h-48 p-2">
             <Image
               src={currentPlayer.championImage!}
               alt="Champion"
-              width={100}
-              height={100}
-              className="object-cover h-full w-full rounded-t-3xl"
+              width={120}
+              height={120}
+              className="object-contain size-full rounded-t-3xl"
             />
           </div>
           {/* Game data */}
@@ -135,15 +178,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
               </thead>
               <tbody className="divide-y divide-gray-700">
                 {/* Populate table */}
-                {allies.map((player, index) => (
-                  <tr key={index}>
-                    <td>{player.name}</td>
-                    <td>{player.champion}</td>
-                    <td>{player.avgKda.toFixed(2)}</td>
-                    <td>{player.avgCs.toFixed(2)}</td>
-                    <td>{player.soloDuoRank}</td>
-                  </tr>
-                ))}
+                {allyColor === "blue"
+                  ? mapTeam(allies, true)
+                  : mapTeam(enemies, false)}
               </tbody>
             </table>
             {/* Red Team Table */}
@@ -156,21 +193,15 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                   <th>Player</th>
                   <th>Champion</th>
                   <th>Avg KDA</th>
-                  <th>Avg CS</th>
+                  <th>Avg CS/min</th>
                   <th>Rank</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
                 {/* Populate table */}
-                {enemies.map((player, index) => (
-                  <tr key={index}>
-                    <td>{player.name}</td>
-                    <td>{player.champion}</td>
-                    <td>{player.avgKda.toFixed(2)}</td>
-                    <td>{player.avgCs.toFixed(2)}</td>
-                    <td>{player.soloDuoRank}</td>
-                  </tr>
-                ))}
+                {allyColor === "red"
+                  ? mapTeam(allies, true)
+                  : mapTeam(enemies, false)}
               </tbody>
             </table>
           </div>
