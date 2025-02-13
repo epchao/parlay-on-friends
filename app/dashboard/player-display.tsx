@@ -2,7 +2,7 @@
 
 import { Player } from "@/interfaces/player";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { calculateGameTime } from "../api/get-current-game-info/calculateGametime";
 
 interface PlayerDisplayProps {
@@ -20,6 +20,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use ref to keep track of API calls
+  const isFetching = useRef(false);
 
   // Function to create JSX for teams
   const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
@@ -43,6 +46,10 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   useEffect(() => {
     // @TODO: Ensure that if the current player isn't in game, then nothing will load.
     const fetchPlayer = async () => {
+      // Prevent overlapping calls
+      if (isFetching.current) return;
+      isFetching.current = true;
+
       try {
         const response = await fetch(
           `/api/get-current-game-info?riotId=${name}&tag=${tag}`
@@ -73,6 +80,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         setError("Error fetching player data");
         console.error(err);
       } finally {
+        isFetching.current = false;
         setLoading(false);
       }
     };
