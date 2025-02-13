@@ -30,11 +30,11 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
     return updatedTeam.map((player: Player, index) => (
       <tr key={index}>
-        <td>{player.name}</td>
-        <td>{player.champion}</td>
-        <td>{player.avgKda.toFixed(2)}</td>
-        <td>{player.avgCs.toFixed(2)}</td>
-        <td>{player.soloDuoRank}</td>
+        <td className="w-1/5 px-1 py-2">{player.name}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.champion}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.avgKda.toFixed(2)}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.avgCs.toFixed(2)}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.soloDuoRank}</td>
       </tr>
     ));
   };
@@ -50,7 +50,6 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           throw new Error("Player not found or API error");
         }
         const data = await response.json();
-        console.log(data);
 
         if (data.error === "Player not in game") {
           setError("This player is currently not in game.");
@@ -85,59 +84,64 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   if (!currentPlayer) return <div>No player data found</div>;
 
-  // @TODO: Ensure that if current player has no rank, then we should just display no rank as right
-  // now it tries to look for an empty image name, which is invalid.
   return (
     <>
       {/* Main Container */}
-      <main className="flex flex-col items-center gap-2 p-2 bg-green-500 h-auto w-[95dvw] rounded-3xl lg:flex-row lg:p-8 lg:gap-8">
+      <main className="bg-gray-700 min-w-[90dvw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm">
         {/* Player info container */}
-        <section className="flex flex-col items-center bg-neutral-400 h-auto w-full rounded-3xl sm:flex-row sm:justify-evenly lg:flex-col lg:h-[40rem] lg:w-2/6">
+        <section className="bg-gray-800 m-3 row-span-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12">
           {/* Player icon */}
-          <div className="flex items-center gap-2 p-4 lg:p-0 lg:pt-8">
-            <Image
-              src={currentPlayer.icon!}
-              alt="icon"
-              width={300}
-              height={300}
-              className="size-20 rounded-lg"
-            />
-            <div className="flex flex-col">
-              <p>
-                {currentPlayer.name} #{currentPlayer.tag}
+          <div className="flex flex-col items-center">
+            <div className="relative mb-4">
+              <Image
+                src={currentPlayer.icon!}
+                alt="icon"
+                width={64}
+                height={64}
+                className="size-16 rounded-full lg:size-36"
+              />
+              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/95 p-1 rounded-xl lg:top-[90%]">
+                {currentPlayer.level}
               </p>
-              <p className="text-xs">Level {currentPlayer.level}</p>
             </div>
+            <p>
+              {currentPlayer.name} #{currentPlayer.tag}
+            </p>
           </div>
           {/* Player ranks */}
-          <div className="flex h-full w-full py-4 justify-evenly items-center lg:flex-col lg:w-full text-center lg:justify-evenly">
-            <div className="text-xs sm:text-sm flex flex-col items-center lg:text-base lg:w-full">
-              <p className="lg:bg-gray-800 lg:w-full lg:p-4">Solo/Duo</p>
-              <div className="lg:flex lg:flex-col lg:justify-center">
-                {currentPlayer.soloDuoRankImage && (
-                  <Image
-                    src={currentPlayer.soloDuoRankImage!}
-                    alt="Rank"
-                    width={128}
-                    height={128}
-                    className="m-4 size-16 lg:size-24"
-                  />
-                )}
-                <p>{currentPlayer.soloDuoRank}</p>
-              </div>
+          <div className="flex justify-evenly text-center lg:flex-col lg:p-6 lg:items-center lg:gap-8 2xl:flex-row">
+            <div className="flex flex-col items-center bg-gray-600 rounded-xl px-6 py-4 sm:px-10 sm:py-6 md:px-12 lg:size-48 lg:items-between 2xl:min-w-[10dvw] 2xl:p-0 2xl:justify-evenly">
+              <p>Solo/Duo</p>
+              {currentPlayer.soloDuoRankImage && (
+                <Image
+                  src={currentPlayer.soloDuoRankImage!}
+                  alt="Rank"
+                  width={64}
+                  height={64}
+                  className="size-20 lg:size-24"
+                />
+              )}
+              {/* Placeholder until we get an unranked image */}
+              {!currentPlayer.soloDuoRankImage && (
+                <div className="size-20 lg:size-24"></div>
+              )}
+              <p>{currentPlayer.soloDuoRank}</p>
             </div>
-            <div className="bg-white h-28 w-[1px] lg:hidden"></div>
-            <div className="text-xs sm:text-sm flex flex-col items-center lg:text-base lg:w-full">
-              <p className="lg:bg-gray-800 lg:w-full lg:p-4">Flex</p>
-              <div className="lg:flex lg:flex-col lg:justify-center">
+            <div className="flex flex-col items-center bg-gray-600 rounded-xl px-6 py-4 sm:px-10 sm:py-6 md:px-12 lg:size-48 lg:items-between 2xl:min-w-[10dvw] 2xl:p-0 2xl:justify-evenly">
+              <p>Flex</p>
+              <div>
                 {currentPlayer.flexRankImage && (
                   <Image
                     src={currentPlayer.flexRankImage!}
                     alt="Rank"
-                    width={128}
-                    height={128}
-                    className="m-4 size-16 lg:size-24"
+                    width={64}
+                    height={64}
+                    className="size-20 lg:size-24"
                   />
+                )}
+                {/* Placeholder until we get an unranked image */}
+                {!currentPlayer.flexRankImage && (
+                  <div className="size-20 lg:size-24"></div>
                 )}
                 <p>{currentPlayer.flexRank}</p>
               </div>
@@ -145,65 +149,61 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           </div>
         </section>
         {/* Champ Image + Game Meta Data Container */}
-        <section className="bg-neutral-400 rounded-3xl h-auto w-[100%] lg:h-[40rem] lg:w-4/6 lg:flex lg:flex-col">
+        <section className="bg-gray-800 mx-3 mb-3 row-span-8 rounded-xl text-center lg:col-span-8 lg:row-span-12 lg:m-3">
           {/* Champ Image */}
-          <div className="flex-1 h-24 lg:h-48 p-2">
+          <div className="p-2">
             <Image
               src={currentPlayer.championImage!}
               alt="Champion"
-              width={120}
-              height={120}
-              className="object-contain size-full rounded-t-3xl"
+              width={64}
+              height={64}
+              className="size-20 m-auto lg:size-36"
             />
           </div>
           {/* Game data */}
-          <div className="flex-1 flex flex-col text-center text-xs lg:auto">
+          <div className="">
             {/* Time */}
-            <div className="bg-black p-1 sm:text-sm lg:text-base">
-              <p>Game Time : {time}</p>
-            </div>
+            <p className="bg-gray-600 py-4">Game Time: {time}</p>
             {/* Blue Team Table */}
-            <div className="bg-blue-400 p-1 sm:text-sm lg:text-base">
-              <p>Blue Team</p>
+            <div>
+              <p className="bg-blue-600 py-4">Blue Team</p>
+              <table className="w-full">
+                <thead className="border-b border-blue-600">
+                  <tr className="">
+                    <th className="w-1/5 p-1 ">Player</th>
+                    <th className="w-1/5 p-1 ">Champion</th>
+                    <th className="w-1/5 p-1 ">Avg KDA</th>
+                    <th className="w-1/5 p-1 ">Avg CS/min</th>
+                    <th className="w-1/5 p-1 ">Rank</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-600">
+                  {allyColor === "blue"
+                    ? mapTeam(allies, true)
+                    : mapTeam(enemies, false)}
+                </tbody>
+              </table>
             </div>
-            <table className="flex-1 table-fixed w-full text-[0.6rem] sm:text-sm lg:text-base">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th>Player</th>
-                  <th>Champion</th>
-                  <th>Avg KDA</th>
-                  <th>Avg CS/min</th>
-                  <th>Rank</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {/* Populate table */}
-                {allyColor === "blue"
-                  ? mapTeam(allies, true)
-                  : mapTeam(enemies, false)}
-              </tbody>
-            </table>
             {/* Red Team Table */}
-            <div className="bg-red-400 p-1 mt-1 text-xs sm:text-sm lg:text-base">
-              <p>Red Team</p>
+            <div>
+              <p className="bg-red-600 py-4">Red Team</p>
+              <table className="w-full">
+                <thead className="border-b border-red-600">
+                  <tr>
+                    <th className="w-1/5 p-1">Player</th>
+                    <th className="w-1/5 p-1">Champion</th>
+                    <th className="w-1/5 p-1">Avg KDA</th>
+                    <th className="w-1/5 p-1">Avg CS/min</th>
+                    <th className="w-1/5 p-1">Rank</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-600">
+                  {allyColor === "red"
+                    ? mapTeam(allies, true)
+                    : mapTeam(enemies, false)}
+                </tbody>
+              </table>
             </div>
-            <table className="flex-1 table-fixed w-full text-[0.6rem] sm:text-sm lg:text-base">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th>Player</th>
-                  <th>Champion</th>
-                  <th>Avg KDA</th>
-                  <th>Avg CS/min</th>
-                  <th>Rank</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {/* Populate table */}
-                {allyColor === "red"
-                  ? mapTeam(allies, true)
-                  : mapTeam(enemies, false)}
-              </tbody>
-            </table>
           </div>
         </section>
       </main>
