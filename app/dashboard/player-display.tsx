@@ -87,12 +87,12 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   return (
     <>
       {/* Main Container */}
-      <main className="bg-gray-700 min-w-[90dvw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm">
+      <main className="bg-gray-700 min-w-[90dvw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm xl:text-base">
         {/* Player info container */}
-        <section className="bg-gray-800 m-3 row-span-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12">
+        <section className="bg-gray-800 m-3 row-span-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
           {/* Player icon */}
           <div className="flex flex-col items-center">
-            <div className="relative mb-4">
+            <div className="relative mb-6 sm:mb-4 lg:mb-6 xl:mb-8">
               <Image
                 src={currentPlayer.icon!}
                 alt="icon"
@@ -100,11 +100,11 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                 height={64}
                 className="size-16 rounded-full lg:size-36"
               />
-              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/95 p-1 rounded-xl lg:top-[90%]">
+              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/95 p-1 rounded-xl lg:top-[85%]">
                 {currentPlayer.level}
               </p>
             </div>
-            <p>
+            <p className="text-base lg:text-2xl xl:text-4xl">
               {currentPlayer.name} #{currentPlayer.tag}
             </p>
           </div>
