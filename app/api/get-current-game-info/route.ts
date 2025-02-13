@@ -5,18 +5,6 @@ import { fetchPlayerData } from "../get-player/fetchPlayerData";
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
-const calculateGameTime = (gameStartTime: number) => {
-  const currentTime = Date.now();
-  const gameSeconds = Math.floor((currentTime - gameStartTime) / 1000);
-
-  const minutes = Math.floor(gameSeconds / 60);
-  const seconds = gameSeconds % 60;
-
-  const gameTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-
-  return gameTime;
-};
-
 export async function GET(request: Request) {
   // Get search params
   const { searchParams } = new URL(request.url);
@@ -66,7 +54,7 @@ export async function GET(request: Request) {
       }
 
       // Get game time
-      const gameTime = calculateGameTime(details.response.gameStartTime);
+      const gameTime = details.response.gameStartTime;
 
       // Hold current player, blue team, and red team
       let currentPlayer = {};

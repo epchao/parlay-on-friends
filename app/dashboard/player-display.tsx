@@ -3,6 +3,7 @@
 import { Player } from "@/interfaces/player";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { calculateGameTime } from "../api/get-current-game-info/calculateGametime";
 
 interface PlayerDisplayProps {
   name: string;
@@ -15,7 +16,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   const [allies, setAllies] = useState<Player[]>([]);
   const [allyColor, setAllyColor] = useState("");
   const [enemies, setEnemies] = useState<Player[]>([]);
-  const [time, setTime] = useState("00:00");
+  const [time, setTime] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +78,23 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
     };
 
     fetchPlayer();
-  }, [name, tag]);
+
+    // Set interval to fetch data every 60 seconds
+    const interval = setInterval(fetchPlayer, 60000);
+
+    // Clear interval when component unmounts
+    return () => clearInterval(interval);
+  }, []);
+
+  // Set interval to tick up every second
+  useEffect(() => {
+    const timerInterval = setInterval(() => {
+      setTime((prevTime) => prevTime + 1);
+    }, 1000);
+
+    // Clear interval when component unmounts
+    return () => clearInterval(timerInterval);
+  }, []);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -100,7 +117,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                 height={64}
                 className="size-16 rounded-full lg:size-36"
               />
-              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/95 p-1 rounded-xl lg:top-[85%]">
+              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/80 px-2 py-1 rounded-xl lg:top-[85%]">
                 {currentPlayer.level}
               </p>
             </div>
@@ -163,7 +180,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           {/* Game data */}
           <div className="">
             {/* Time */}
-            <p className="bg-gray-600 py-4">Game Time: {time}</p>
+            <p className="bg-gray-600 py-4">
+              Game Time: {calculateGameTime(time)}
+            </p>
             {/* Blue Team Table */}
             <div>
               <p className="bg-blue-600 py-4">Blue Team</p>
