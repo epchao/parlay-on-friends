@@ -2,6 +2,7 @@ import { RiotApi, LolApi, Constants } from "twisted";
 import { Player } from "../../../interfaces/player";
 import { promiseHooks } from "v8";
 import { constants } from "buffer";
+import { createClient } from '@/utils/supabase/server';
 
 /*
 gamemode: CLASSIC
@@ -18,6 +19,11 @@ const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
 export async function MatchHistoryStats(riotId: string, tag: string){
+
+  const supabase = await createClient(); 
+  const { data: players } = await supabase.from("players").select('*');
+  console.log(JSON.stringify(players, null, 2));
+
   try{
     sleep(1000);
     const account = await riotApi.Account.getByRiotId(
@@ -37,7 +43,7 @@ export async function MatchHistoryStats(riotId: string, tag: string){
 
     sleep(1000);
     for (const queue of rankedMatch){
-      const matches = await lolApi.MatchV5.list(puuid, Constants.RegionGroups.AMERICAS, {count: 20, queue});  // Takes last 20 matches
+      const matches = await lolApi.MatchV5.list(puuid, Constants.RegionGroups.AMERICAS, {count: 5, queue});  // Takes last 20 matches
       matchIds.push(...matches.response);
     }
     sleep(1000);
@@ -51,9 +57,41 @@ export async function MatchHistoryStats(riotId: string, tag: string){
           // Find the participant corresponding to the given PUUID
           const playerStats = participants.find((p) => p.puuid === puuid);
 
+          let kills;  // Get the kills count
+          if (playerStats){
+              kills = playerStats.kills;
+          }else {
+              kills = null;
+          }
+
+          let assists;  // Get the assists count
+          if (playerStats){
+              assists = playerStats.assists;
+          }else {
+            assists = null;
+          }
+
+          let deaths;  // Get the death count
+          if (playerStats){
+            deaths = playerStats.deaths;
+          }else {
+            deaths = null;
+          }
+          
+          let cs;  // Get the cs count
+          if (playerStats){
+            cs = playerStats.totalMinionsKilled + playerStats.neutralMinionsKilled;
+          }else {
+            cs = null;
+          }
+
+          let teamPosition;
+          if (playerStats){
+            teamPosition = playerStats.teamPosition;
+          }
+
           return {
-              matchId,
-              kills: playerStats ? playerStats.kills : null // Get the kills count
+              matchId, kills, deaths, assists, cs, teamPosition, players
           };
       })
   );

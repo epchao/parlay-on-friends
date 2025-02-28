@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   }
 
   console.log("penis inejctor");
-  const test = await MatchHistoryStats("PipKnight", "pengu");
+  const test = await MatchHistoryStats("Jiwon", "Soap");
   console.log(test);
 
   return NextResponse.json(playerData);
