@@ -2,8 +2,8 @@
 
 import { Player } from "@/interfaces/player";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { allies, enemies } from "./mock-player-display-data";
+import { useEffect, useState, useRef } from "react";
+import { calculateGameTime } from "../api/get-current-game-info/calculateGametime";
 
 interface PlayerDisplayProps {
   name: string;
@@ -11,34 +11,97 @@ interface PlayerDisplayProps {
 }
 
 const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
-  const [time, setTime] = useState("00:00");
+  // States for game data
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
+  const [allies, setAllies] = useState<Player[]>([]);
+  const [allyColor, setAllyColor] = useState("");
+  const [enemies, setEnemies] = useState<Player[]>([]);
+  const [time, setTime] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use ref to keep track of API calls
+  const isFetching = useRef(false);
+
+  // Function to create JSX for teams
+  const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
+    let updatedTeam = [...team];
+
+    if (currentPlayer && isCurrentInTeam) {
+      updatedTeam = [currentPlayer, ...team];
+    }
+
+    return updatedTeam.map((player: Player, index) => (
+      <tr key={index}>
+        <td className="w-1/5 px-1 py-2">{player.name}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.champion}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.avgKda.toFixed(2)}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.avgCs.toFixed(2)}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.soloDuoRank}</td>
+      </tr>
+    ));
+  };
 
   useEffect(() => {
     // @TODO: Ensure that if the current player isn't in game, then nothing will load.
     const fetchPlayer = async () => {
+      // Prevent overlapping calls
+      if (isFetching.current) return;
+      isFetching.current = true;
+
       try {
-        const response = await fetch(`/api/get-player?riotId=${name}&tag=${tag}`);
+        const response = await fetch(
+          `/api/get-current-game-info?riotId=${name}&tag=${tag}`
+        );
         if (!response.ok) {
-          throw new Error('Player not found or API error');
+          throw new Error("Player not found or API error");
         }
-        const data: Player = await response.json();
-        setCurrentPlayer(data);
+        const data = await response.json();
+
+        if (data.error === "Player not in game") {
+          setError("This player is currently not in game.");
+          return;
+        } else if (
+          data.error === "Player not currently playing a ranked match"
+        ) {
+          setError("This player is not playing a ranked match.");
+          return;
+        } else if (data.error === "Player not found") {
+          setError("This player does not exist");
+          return;
+        }
+        setCurrentPlayer(data.currentPlayer);
+        setTime(data.gameTime);
+        setAllyColor(data.allyColor);
+        setAllies(data.allies);
+        setEnemies(data.enemies);
       } catch (err) {
         setError("Error fetching player data");
         console.error(err);
       } finally {
+        isFetching.current = false;
         setLoading(false);
       }
     };
 
     fetchPlayer();
-  }, [name, tag]);
 
+    // Set interval to fetch data every 60 seconds
+    const interval = setInterval(fetchPlayer, 60000);
+
+    // Clear interval when component unmounts
+    return () => clearInterval(interval);
+  }, []);
+
+  // Set interval to tick up every second
   useEffect(() => {
-    setTime("19:00");
+    const timerInterval = setInterval(() => {
+      setTime((prevTime) => prevTime + 1);
+    }, 1000);
+
+    // Clear interval when component unmounts
+    return () => clearInterval(timerInterval);
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -46,133 +109,128 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   if (!currentPlayer) return <div>No player data found</div>;
 
-  // @TODO: Ensure that if current player has no rank, then we should just display no rank as right
-  // now it tries to look for an empty image name, which is invalid.
   return (
     <>
       {/* Main Container */}
-      <main className="flex flex-col items-center gap-2 p-2 bg-green-500 h-auto w-[95dvw] rounded-3xl lg:flex-row lg:p-8 lg:gap-8">
+      <main className="bg-gray-700 min-w-[90dvw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm xl:text-base">
         {/* Player info container */}
-        <section className="flex flex-col items-center bg-neutral-400 h-auto w-full rounded-3xl sm:flex-row sm:justify-evenly lg:flex-col lg:h-[40rem] lg:w-2/6">
+        <section className="bg-gray-800 m-3 row-span-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
           {/* Player icon */}
-          <div className="flex items-center gap-2 p-4 lg:p-0 lg:pt-8">
-            <Image
-              src={currentPlayer.icon!}
-              alt="icon"
-              width={100}
-              height={100}
-              className="h-16 rounded-lg"
-            />
-            <div className="flex flex-col">
-              <p>
-                {currentPlayer.name} #{currentPlayer.tag}
+          <div className="flex flex-col items-center">
+            <div className="relative mb-6 sm:mb-4 lg:mb-6 xl:mb-8">
+              <Image
+                src={currentPlayer.icon!}
+                alt="icon"
+                width={64}
+                height={64}
+                className="size-16 rounded-full lg:size-36"
+              />
+              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/80 px-2 py-1 rounded-xl lg:top-[85%]">
+                {currentPlayer.level}
               </p>
-              <p className="text-xs">Level {currentPlayer.level}</p>
             </div>
+            <p className="text-base lg:text-2xl xl:text-4xl">
+              {currentPlayer.name} #{currentPlayer.tag}
+            </p>
           </div>
           {/* Player ranks */}
-          <div className="flex h-full w-full py-4 justify-evenly items-center lg:flex-col lg:w-full text-center lg:justify-evenly">
-            <div className="text-xs sm:text-sm flex flex-col items-center lg:text-base lg:w-full">
-              <p className="lg:bg-gray-800 lg:w-full lg:p-4">Solo/Duo</p>
-              <div className="lg:flex lg:flex-col lg:justify-center">
+          <div className="flex justify-evenly text-center lg:flex-col lg:p-6 lg:items-center lg:gap-8 2xl:flex-row">
+            <div className="flex flex-col items-center bg-gray-600 rounded-xl px-6 py-4 sm:px-10 sm:py-6 md:px-12 lg:size-48 lg:items-between 2xl:min-w-[10dvw] 2xl:p-0 2xl:justify-evenly">
+              <p>Solo/Duo</p>
+              {currentPlayer.soloDuoRankImage && (
                 <Image
                   src={currentPlayer.soloDuoRankImage!}
                   alt="Rank"
-                  width={100}
-                  height={100}
-                  className="m-4 h-12 lg:h-16"
+                  width={64}
+                  height={64}
+                  className="size-20 lg:size-24"
                 />
-                <p>{currentPlayer.soloDuoRank}</p>
-              </div>
+              )}
+              {/* Placeholder until we get an unranked image */}
+              {!currentPlayer.soloDuoRankImage && (
+                <div className="size-20 lg:size-24"></div>
+              )}
+              <p>{currentPlayer.soloDuoRank}</p>
             </div>
-            <div className="bg-white h-28 w-[1px] lg:hidden"></div>
-            <div className="text-xs sm:text-sm flex flex-col items-center lg:text-base lg:w-full">
-              <p className="lg:bg-gray-800 lg:w-full lg:p-4">Flex</p>
-              <div className="lg:flex lg:flex-col lg:justify-center">
-                <Image
-                  src={currentPlayer.flexRankImage!}
-                  alt="Rank"
-                  width={100}
-                  height={100}
-                  className="m-4 h-12 lg:h-16"
-                />
+            <div className="flex flex-col items-center bg-gray-600 rounded-xl px-6 py-4 sm:px-10 sm:py-6 md:px-12 lg:size-48 lg:items-between 2xl:min-w-[10dvw] 2xl:p-0 2xl:justify-evenly">
+              <p>Flex</p>
+              <div>
+                {currentPlayer.flexRankImage && (
+                  <Image
+                    src={currentPlayer.flexRankImage!}
+                    alt="Rank"
+                    width={64}
+                    height={64}
+                    className="size-20 lg:size-24"
+                  />
+                )}
+                {/* Placeholder until we get an unranked image */}
+                {!currentPlayer.flexRankImage && (
+                  <div className="size-20 lg:size-24"></div>
+                )}
                 <p>{currentPlayer.flexRank}</p>
               </div>
             </div>
           </div>
         </section>
         {/* Champ Image + Game Meta Data Container */}
-        <section className="bg-neutral-400 rounded-3xl h-auto w-[100%] lg:h-[40rem] lg:w-4/6 lg:flex lg:flex-col">
+        <section className="bg-gray-800 mx-3 mb-3 row-span-8 rounded-xl text-center lg:col-span-8 lg:row-span-12 lg:m-3">
           {/* Champ Image */}
-          <div className="flex-1 h-24 lg:h-48">
+          <div className="p-2">
             <Image
               src={currentPlayer.championImage!}
               alt="Champion"
-              width={100}
-              height={100}
-              className="object-cover h-full w-full rounded-t-3xl"
+              width={64}
+              height={64}
+              className="size-20 m-auto lg:size-36"
             />
           </div>
           {/* Game data */}
-          <div className="flex-1 flex flex-col text-center text-xs lg:auto">
+          <div className="">
             {/* Time */}
-            <div className="bg-black p-1 sm:text-sm lg:text-base">
-              <p>Game Time : {time}</p>
-            </div>
+            <p className="bg-gray-600 py-4">
+              Game Time: {calculateGameTime(time)}
+            </p>
             {/* Blue Team Table */}
-            <div className="bg-blue-400 p-1 sm:text-sm lg:text-base">
-              <p>Blue Team</p>
-            </div>
-            <table className="flex-1 table-fixed w-full text-[0.6rem] sm:text-sm lg:text-base">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th>Player</th>
-                  <th>Champion</th>
-                  <th>Avg KDA</th>
-                  <th>Avg CS/min</th>
-                  <th>Rank</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {/* Populate table */}
-                {allies.map((player, index) => (
-                  <tr key={index}>
-                    <td>{player.name}</td>
-                    <td>{player.champion}</td>
-                    <td>{player.avgKda.toFixed(2)}</td>
-                    <td>{player.avgCs.toFixed(2)}</td>
-                    <td>{player.soloDuoRank}</td>
+            <div>
+              <p className="bg-blue-600 py-4">Blue Team</p>
+              <table className="w-full">
+                <thead className="border-b border-blue-600">
+                  <tr className="">
+                    <th className="w-1/5 p-1 ">Player</th>
+                    <th className="w-1/5 p-1 ">Champion</th>
+                    <th className="w-1/5 p-1 ">Avg KDA</th>
+                    <th className="w-1/5 p-1 ">Avg CS/min</th>
+                    <th className="w-1/5 p-1 ">Rank</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-600">
+                  {allyColor === "blue"
+                    ? mapTeam(allies, true)
+                    : mapTeam(enemies, false)}
+                </tbody>
+              </table>
+            </div>
             {/* Red Team Table */}
-            <div className="bg-red-400 p-1 mt-1 text-xs sm:text-sm lg:text-base">
-              <p>Red Team</p>
-            </div>
-            <table className="flex-1 table-fixed w-full text-[0.6rem] sm:text-sm lg:text-base">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th>Player</th>
-                  <th>Champion</th>
-                  <th>Avg KDA</th>
-                  <th>Avg CS</th>
-                  <th>Rank</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {/* Populate table */}
-                {enemies.map((player, index) => (
-                  <tr key={index}>
-                    <td>{player.name}</td>
-                    <td>{player.champion}</td>
-                    <td>{player.avgKda.toFixed(2)}</td>
-                    <td>{player.avgCs.toFixed(2)}</td>
-                    <td>{player.soloDuoRank}</td>
+            <div>
+              <p className="bg-red-600 py-4">Red Team</p>
+              <table className="w-full">
+                <thead className="border-b border-red-600">
+                  <tr>
+                    <th className="w-1/5 p-1">Player</th>
+                    <th className="w-1/5 p-1">Champion</th>
+                    <th className="w-1/5 p-1">Avg KDA</th>
+                    <th className="w-1/5 p-1">Avg CS/min</th>
+                    <th className="w-1/5 p-1">Rank</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-600">
+                  {allyColor === "red"
+                    ? mapTeam(allies, true)
+                    : mapTeam(enemies, false)}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </main>
