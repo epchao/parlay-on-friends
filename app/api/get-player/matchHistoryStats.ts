@@ -5,7 +5,7 @@ import { constants } from "buffer";
 import { createClient } from '@/utils/supabase/server';
 
 /*
-gamemode: CLASSIC
+
 verify matches are from ranked (solo/duo and flex)
 get past 20 matchIDs
 calculate (use eugenes function in docs)
@@ -43,12 +43,12 @@ export async function MatchHistoryStats(riotId: string, tag: string){
 
     sleep(1000);
     for (const queue of rankedMatch){
-      const matches = await lolApi.MatchV5.list(puuid, Constants.RegionGroups.AMERICAS, {count: 5, queue});  // Takes last 20 matches
+      const matches = await lolApi.MatchV5.list(puuid, Constants.RegionGroups.AMERICAS, {count: 15, queue});  // Takes last 15 matches
       matchIds.push(...matches.response);
     }
     sleep(1000);
 
-    const matchKills = await Promise.all(   // Waits till all processes are done
+    const matchStats = await Promise.all(   // Waits till all processes are done
       matchIds.map(async (matchId) => {
           const matchData = await lolApi.MatchV5.get(matchId, Constants.RegionGroups.AMERICAS);
           sleep(100);
@@ -96,7 +96,30 @@ export async function MatchHistoryStats(riotId: string, tag: string){
       })
   );
 
-  return matchKills;
+
+    const numGames = matchStats.length;
+    
+    let totalKills = 0;
+    let totalDeaths = 0;
+    let totalAssists = 0;
+    let totalCS = 0;
+
+    for (const game of matchStats){
+      if (game.kills !== null) totalKills += game.kills;
+      if (game.deaths !== null) totalDeaths += game.deaths;
+      if (game.assists !== null) totalAssists += game.assists;
+      if (game.cs !== null) totalCS += game.cs;
+    }
+
+    const averageKills = parseFloat((totalKills / numGames).toFixed(1));
+    const averageDeaths = parseFloat((totalDeaths / numGames).toFixed(1));
+    const averageAssists = parseFloat((totalAssists / numGames).toFixed(1));
+    const averageCs = parseFloat((totalCS / numGames).toFixed(1));
+
+    return {
+      averageKills, averageDeaths, averageAssists, averageCs
+    };
+
 } catch (error) {
   console.error("Error fetching match history:", error);
   
