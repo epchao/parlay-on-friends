@@ -12,10 +12,12 @@ export async function POST(request: Request) {
   // Connect to DB
   const supabase = await createClient();
 
+  // Insert
   const { error } = await supabase
     .from("bets")
     .insert({ user_id, player_id, bet_amount, bet_type });
 
+  // Check if error happened while inserting
   if (error) {
     console.log(error);
     return Response.json({ error: "Failed to place bet" }, { status: 500 });
