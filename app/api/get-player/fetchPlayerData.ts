@@ -72,6 +72,13 @@ export async function fetchPlayerData(riotId: string, tag: string) {
       }
     });
 
+    if (soloDuoRankImage === "")
+      soloDuoRankImage =
+        "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png/revision/latest?cb=20231007211937";
+    if (flexRankImage === "")
+      flexRankImage =
+        "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png/revision/latest?cb=20231007211937";
+
     // @TODO: Replace avgKDA, avgCS with Match History averages or from database.
     const playerData: Player = {
       name: riotId as string,

@@ -121,8 +121,8 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
               <Image
                 src={currentPlayer.icon!}
                 alt="icon"
-                width={64}
-                height={64}
+                width={256}
+                height={256}
                 className="size-16 rounded-full lg:size-24"
               />
               <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/80 px-2 py-1 rounded-xl lg:top-[85%] text-xs">
@@ -141,8 +141,8 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                 <Image
                   src={currentPlayer.soloDuoRankImage!}
                   alt="Rank"
-                  width={64}
-                  height={64}
+                  width={256}
+                  height={256}
                   className="size-20 lg:size-24"
                 />
               )}
@@ -159,8 +159,8 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                   <Image
                     src={currentPlayer.flexRankImage!}
                     alt="Rank"
-                    width={64}
-                    height={64}
+                    width={256}
+                    height={256}
                     className="size-20 lg:size-24"
                   />
                 )}
@@ -180,8 +180,8 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             <Image
               src={currentPlayer.championImage!}
               alt="Champion"
-              width={64}
-              height={64}
+              width={256}
+              height={256}
               className="size-20 m-auto lg:size-24"
             />
           </div>
