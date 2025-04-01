@@ -134,7 +134,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             </p>
           </div>
           {/* Player ranks */}
-          <div className="flex justify-evenly text-center lg:flex-col lg:p-6 lg:items-center lg:gap-8 2xl:flex-row">
+          <div className="flex justify-evenly text-center mb-4 lg:mb-0 lg:flex-col lg:p-6 lg:items-center lg:gap-8 2xl:flex-row">
             <div className="flex flex-col items-center bg-gray-600 rounded-xl px-6 py-4 sm:px-10 sm:py-6 md:px-12 lg:size-48 lg:items-between 2xl:min-w-[10dvw] 2xl:p-0 2xl:justify-evenly">
               <p>Solo/Duo</p>
               {currentPlayer.soloDuoRankImage && (
