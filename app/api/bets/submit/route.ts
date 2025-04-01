@@ -45,6 +45,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.log(error);
-    return Response.json({ error: "Failed to place bet" }, { status: 500 });
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
