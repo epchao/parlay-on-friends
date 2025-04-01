@@ -43,7 +43,7 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
         player_id: 1,
         stat: "ASSISTS",
         over: false,
-        amount: 20,
+        amount: 100,
         multiplier: 2.5,
       }),
     });

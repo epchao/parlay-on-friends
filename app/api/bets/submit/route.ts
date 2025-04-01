@@ -24,6 +24,23 @@ export async function POST(request: Request) {
     // Connect to DB
     const supabase = await createClient();
 
+    // Get balance
+    const { data: balanceData, error: balanceError } = await supabase
+      .from("users")
+      .select("account_balance")
+      .eq("user_id", user_id)
+      .single();
+
+    // Check if error happened while getting balance
+    if (balanceError || !balanceData) {
+      return Response.json({ error: "Failed to place bet" }, { status: 500 });
+    }
+
+    // Validate Balance
+    if (amount > balanceData.account_balance) {
+      return Response.json({ error: "Not enough funds" }, { status: 400 });
+    }
+
     // Insert
     const { error } = await supabase
       .from("bets")
@@ -31,7 +48,6 @@ export async function POST(request: Request) {
 
     // Check if error happened while inserting
     if (error) {
-      console.log(error);
       return Response.json({ error: "Failed to place bet" }, { status: 500 });
     }
 
