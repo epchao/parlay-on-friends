@@ -188,12 +188,12 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           {/* Game data */}
           <div className="">
             {/* Time */}
-            <p className="bg-gray-600 py-4">
+            <p className="bg-gray-600 py-2 font-bold">
               Game Time: {calculateGameTime(time)}
             </p>
             {/* Blue Team Table */}
             <div>
-              <p className="bg-blue-600 py-4">Blue Team</p>
+              <p className="bg-blue-600 py-2 font-bold">Blue Team</p>
               <table className="w-full">
                 <thead className="border-b border-blue-600">
                   <tr className="">
@@ -213,7 +213,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             </div>
             {/* Red Team Table */}
             <div>
-              <p className="bg-red-600 py-4">Red Team</p>
+              <p className="bg-red-600 py-2 font-bold">Red Team</p>
               <table className="w-full">
                 <thead className="border-b border-red-600">
                   <tr>
