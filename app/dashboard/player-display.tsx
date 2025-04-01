@@ -123,9 +123,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                 alt="icon"
                 width={64}
                 height={64}
-                className="size-16 rounded-full lg:size-36"
+                className="size-16 rounded-full lg:size-24"
               />
-              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/80 px-2 py-1 rounded-xl lg:top-[85%]">
+              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/80 px-2 py-1 rounded-xl lg:top-[85%] text-xs">
                 {currentPlayer.level}
               </p>
             </div>
@@ -182,7 +182,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
               alt="Champion"
               width={64}
               height={64}
-              className="size-20 m-auto lg:size-36"
+              className="size-20 m-auto lg:size-24"
             />
           </div>
           {/* Game data */}
