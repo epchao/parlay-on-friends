@@ -1,5 +1,11 @@
 "use client";
 import { ChangeEvent, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+
+// TODO
+// Pass down card bets down to this component
+// Update component visually to use dynamic data
+// Use actual data for request body
 
 interface SubmitBetProps {
   balance: number;
@@ -13,6 +19,38 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
       setAmt(val);
     }
   };
+
+  const submitHandler = async () => {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      console.error("User not allowed to place bet");
+      return;
+    }
+
+    const submission = await fetch("/api/bets/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      // Filler data
+      body: JSON.stringify({
+        user_id: user.id,
+        player_id: 1,
+        stat: "ASSISTS",
+        over: false,
+        amount: 20,
+        multiplier: 2.5,
+      }),
+    });
+    const response = await submission.json();
+    console.log(response);
+  };
+
   return (
     <div className="bg-emerald-900 p-[1.5rem] rounded-lg max-w-[375px]">
       <div>
@@ -41,7 +79,10 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
           </div>
         </div>
         <div className="flex justify-end mt-[.5rem]">
-          <button className="bg-green-500 hover:bg-green-600 active:bg-green-700 p-1 px-[2.5rem] rounded-md">
+          <button
+            className="bg-green-500 hover:bg-green-600 active:bg-green-700 p-1 px-[2.5rem] rounded-md"
+            onClick={submitHandler}
+          >
             Submit
           </button>
         </div>
