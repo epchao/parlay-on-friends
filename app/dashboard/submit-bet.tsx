@@ -84,7 +84,7 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
       <div className="text-white space-y-4">
         <div className="flex gap-2 items-center">
           <input
-            className="rounded-md px-4 py-2 bg-zinc-800 text-white placeholder-gray-400 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-green-500 w-1/2"
+            className="rounded-md px-4 py-2 bg-gray-800 text-white placeholder-gray-400 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-green-500 w-1/2"
             type="number"
             placeholder="Entry"
             value={betAmt === 0 ? "" : betAmt}
@@ -92,14 +92,14 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
             min="1"
           />
 
-          <div className="bg-zinc-800 rounded-md px-4 py-2 text-green-400 font-medium w-1/2">
+          <div className="bg-gray-800 rounded-md px-4 py-2 text-green-400 font-medium w-1/2">
             <span className="text-white">To win:</span> ${betAmt && betAmt * 2}
           </div>
         </div>
 
         <div className="flex">
           <button
-            className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold px-6 py-2 rounded-lg transition-colors flex-1"
+            className="bg-gray-900 hover:bg-green-700 active:bg-green-800 text-white font-semibold px-6 py-2 rounded-lg transition-colors flex-1"
             onClick={submitHandler}
           >
             Place Entry
