@@ -68,7 +68,7 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
   };
 
   return (
-    <div className="bg-gray-700 p-6 rounded-2xl max-w-sm shadow-lg space-y-4">
+    <div className="bg-gray-700 p-6 rounded-2xl max-w-[20rem] sm:max-w-sm shadow-lg space-y-4">
       <div>
         <p className="text-lg text-white font-semibold">
           Balance: <span className="text-green-400">${balance}</span>
