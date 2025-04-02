@@ -3,18 +3,10 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(request: Request) {
   try {
     // Extract request parameters
-    const { user_id, player_id, stat, over, amount, multiplier } =
-      await request.json();
+    const { user_id, player_id, selections, amount } = await request.json();
 
     // Check all fields were specified
-    if (
-      !user_id ||
-      !player_id ||
-      !stat ||
-      over === undefined ||
-      !amount ||
-      !multiplier
-    ) {
+    if (!user_id || !player_id || !selections || !amount) {
       return Response.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -41,10 +33,12 @@ export async function POST(request: Request) {
       return Response.json({ error: "Not enough funds" }, { status: 400 });
     }
 
+    const multiplier = selections.length + 1;
+
     // Insert
     const { error } = await supabase
       .from("bets")
-      .insert({ user_id, player_id, stat, over, amount, multiplier });
+      .insert({ user_id, player_id, selections, amount, multiplier });
 
     // Check if error happened while inserting
     if (error) {
@@ -54,8 +48,7 @@ export async function POST(request: Request) {
     return Response.json({
       user_id,
       player_id,
-      stat,
-      over,
+      selections,
       amount,
       multiplier,
     });

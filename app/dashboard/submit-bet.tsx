@@ -48,20 +48,31 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
         body: JSON.stringify({
           user_id: user.id,
           player_id: 1,
-          stat: "ASSISTS",
-          over: false,
+          selections: [
+            {
+              stat: "KILLS",
+              type: "OVER",
+            },
+            {
+              stat: "DEATHS",
+              type: "UNDER",
+            },
+            {
+              stat: "ASSISTS",
+              type: "UNDER",
+            },
+          ],
           amount: 100,
-          multiplier: 2.5,
         }),
       });
-      const data = await response.json();
 
-      if (!data.ok) {
-        console.error("Bet failed to submit", data.error);
+      if (!response.ok) {
+        console.error("Bet failed to submit");
         return;
       }
 
-      console.log(data);
+      const data = await response.json();
+      console.log("Submitted to DB", data);
     } catch (error) {
       console.error("Unexpected error", error);
     }
