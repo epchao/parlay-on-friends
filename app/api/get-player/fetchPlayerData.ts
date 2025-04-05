@@ -99,11 +99,14 @@ export async function fetchPlayerData(riotId: string, tag: string) {
 
     const supabase = await createClient();
 
-    const { data } = await supabase.from("players").select("*").eq("id", PUUID);
+    const { data, error } = await supabase
+      .from("players")
+      .select("*")
+      .eq("id", PUUID);
 
-    // if (error) {
-    //   return Response.json({ error: "Failed to add player" }, { status: 500 });
-    // }
+    if (error) {
+      return Response.json({ error: "Failed to add player" }, { status: 500 });
+    }
 
     if (data?.length === 0) {
       await supabase
