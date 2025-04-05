@@ -10,8 +10,8 @@ const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 export async function fetchPlayerData(riotId: string, tag: string) {
   try {
     const account = await riotApi.Account.getByRiotId(
-      riotId,
-      tag,
+      riotId as string,
+      tag as string,
       Constants.RegionGroups.AMERICAS
     );
 
