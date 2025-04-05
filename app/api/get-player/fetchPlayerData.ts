@@ -2,6 +2,7 @@ import { RiotApi, LolApi, Constants } from "twisted";
 import { CurrentGameParticipantDTO } from "twisted/dist/models-dto";
 import { Player } from "../../../interfaces/player";
 import { fetchChampion } from "./fetchChampion";
+import { createClient } from "@/utils/supabase/server";
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
@@ -9,8 +10,8 @@ const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 export async function fetchPlayerData(riotId: string, tag: string) {
   try {
     const account = await riotApi.Account.getByRiotId(
-      riotId as string,
-      tag as string,
+      riotId,
+      tag,
       Constants.RegionGroups.AMERICAS
     );
 
@@ -81,6 +82,7 @@ export async function fetchPlayerData(riotId: string, tag: string) {
 
     // @TODO: Replace avgKDA, avgCS with Match History averages or from database.
     const playerData: Player = {
+      puuid: PUUID,
       name: riotId as string,
       tag: tag as string,
       icon: `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/${summoner.response.profileIconId}.png`,
@@ -94,6 +96,23 @@ export async function fetchPlayerData(riotId: string, tag: string) {
       avgKda: 3.5, // Placeholder
       avgCs: 200, // Placeholder
     };
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("players")
+      .select("*")
+      .eq("id", PUUID);
+
+    if (error) {
+      return Response.json({ error: "Failed to add player" }, { status: 500 });
+    }
+
+    if (data?.length === 0) {
+      await supabase
+        .from("players")
+        .insert({ id: PUUID, riot_id: riotId, tag });
+    }
 
     return playerData;
   } catch (error) {
