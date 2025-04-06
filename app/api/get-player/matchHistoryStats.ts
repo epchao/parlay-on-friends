@@ -6,10 +6,14 @@ import { createClient } from '@/utils/supabase/server';
 
 /*
 
-verify matches are from ranked (solo/duo and flex)
-get past 20 matchIDs
-calculate (use eugenes function in docs)
+load raw stats into supabase for the player (to avoid rate limit)
+then filter by player id and then calculate averages
 
+match_id foreign key
+
+put active player (like a streamer) intead of me to see cards and stuff
+
+.insert to put shit into supabase
 */
 const sleep = (ms:number) => {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -19,10 +23,6 @@ const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
 export async function MatchHistoryStats(riotId: string, tag: string){
-
-  const supabase = await createClient(); 
-  const { data: players } = await supabase.from("players").select('*');
-  console.log(JSON.stringify(players, null, 2));
 
   try{
     sleep(1000);
@@ -43,7 +43,7 @@ export async function MatchHistoryStats(riotId: string, tag: string){
 
     sleep(1000);
     for (const queue of rankedMatch){
-      const matches = await lolApi.MatchV5.list(puuid, Constants.RegionGroups.AMERICAS, {count: 15, queue});  // Takes last 15 matches
+      const matches = await lolApi.MatchV5.list(puuid, Constants.RegionGroups.AMERICAS, {count: 5, queue});  // Takes last 15 matches
       matchIds.push(...matches.response);
     }
     sleep(1000);
@@ -85,13 +85,13 @@ export async function MatchHistoryStats(riotId: string, tag: string){
             cs = null;
           }
 
-          let teamPosition;
+          let team_position;
           if (playerStats){
-            teamPosition = playerStats.teamPosition;
+            team_position = playerStats.teamPosition;
           }
 
           return {
-              matchId, kills, deaths, assists, cs, teamPosition, players
+              matchId, kills, deaths, assists, cs, team_position
           };
       })
   );
@@ -116,7 +116,69 @@ export async function MatchHistoryStats(riotId: string, tag: string){
     const averageAssists = parseFloat((totalAssists / numGames).toFixed(1));
     const averageCs = parseFloat((totalCS / numGames).toFixed(1));
 
+    console.log("Searching for player with Riot ID:", riotId, "and Tag:", tag);
+
+    // Inserting data into database
+    const supabase = await createClient();
+
+    // notes for what to do for player_id
+    // filter all the rows by player id and match id
+    // sort by match id
+    // do revsere sorting (highest match id)
+    // check if you find a match id terminate the ENTIRE search (since its already in our database)
+    // since we know its gonna be the same 
+    // 
+
+    
+    // Step 1: Fetch the player ID by matching riot_id and tag
+    const { data: matchingPlayer, error: playerError } = await supabase
+    .from('players')
+    .select('id')
+    .eq('riot_id', riotId)
+    .eq('tag', tag)
+    .single(); // throw error if not found
+
+    if (playerError) {
+    console.error("Error querying player:", playerError);
+    return;
+    }
+
+    if (!matchingPlayer) {
+    console.error("No player found with that riot_id and tag.");
+    return;
+    }
+
+    const playerId = matchingPlayer.id;
+    console.log("player PLEASE WORK", playerId)
+
+      
+    const formattedStats = matchStats.map(match => ({
+      match_id: match.matchId,
+      kills: match.kills,
+      deaths: match.deaths,
+      assists: match.assists,
+      cs: match.cs,
+      team_position: match.team_position,
+      player_id: playerId
+    }));
+
+    // This is to input into the database but commented out during testing
+
+    // const { data, error } = await supabase
+    //   .from('match_history')
+    //   .insert(formattedStats)
+    //   .select();
+
+    //   if (error) {
+    //     console.error("Error inserting match stats:", error);
+    //   } else {
+    //     console.log("Match stats inserted successfully:", data);
+    //   }
+
     return {
+
+      // remove all this average stuff
+      // instead will be using data from our database to calculate averages
       averageKills, averageDeaths, averageAssists, averageCs
     };
 
