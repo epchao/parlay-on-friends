@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchPlayerData } from "./fetchPlayerData";
-import {MatchHistoryStats} from "./matchHistoryStats";
+import { MatchHistoryStats } from "./matchHistoryStats";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -23,8 +23,7 @@ export async function GET(request: Request) {
     );
   }
 
-  console.log("penis inejctor");
-  const test = await MatchHistoryStats("Jiwon", "Soap");
+  const test = await MatchHistoryStats(riotId, tag);
   console.log(test);
 
   return NextResponse.json(playerData);

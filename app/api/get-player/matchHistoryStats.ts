@@ -3,6 +3,7 @@ import { Player } from "../../../interfaces/player";
 import { promiseHooks } from "v8";
 import { constants } from "buffer";
 import { createClient } from "@/utils/supabase/server";
+import { roleAverages } from "./roleAverages";
 
 /*
 
@@ -171,8 +172,6 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
       player_id: playerId,
     }));
 
-    // This is to input into the database but commented out during testing
-
     // Sort by match id
     formattedStats.sort((a, b) => {
       if (a.match_id < b.match_id) return 1;
@@ -196,16 +195,7 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
       }
     }
 
-    // Return averages
-
-    return {
-      // remove all this average stuff
-      // instead will be using data from our database to calculate averages
-      averageKills,
-      averageDeaths,
-      averageAssists,
-      averageCs,
-    };
+    return roleAverages("JUNGLE", playerId);
   } catch (error) {
     console.error("Error fetching match history:", error);
   }
