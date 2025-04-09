@@ -2,7 +2,7 @@ import { RiotApi, LolApi, Constants } from "twisted";
 import { Player } from "../../../interfaces/player";
 import { promiseHooks } from "v8";
 import { constants } from "buffer";
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from "@/utils/supabase/server";
 
 /*
 
@@ -15,16 +15,15 @@ put active player (like a streamer) intead of me to see cards and stuff
 
 .insert to put shit into supabase
 */
-const sleep = (ms:number) => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const sleep = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
-export async function MatchHistoryStats(riotId: string, tag: string){
-
-  try{
+export async function MatchHistoryStats(riotId: string, tag: string) {
+  try {
     sleep(1000);
     const account = await riotApi.Account.getByRiotId(
       riotId as string,
@@ -35,76 +34,88 @@ export async function MatchHistoryStats(riotId: string, tag: string){
       return { error: "Player not found", status: 404 };
     }
 
-    
     const puuid = account.response.puuid;
-    
-    const rankedMatch = [420];   // Solo/Duo and 440 for Flex
+
+    const rankedMatch = [420]; // Solo/Duo and 440 for Flex
     let matchIds: string[] = [];
 
     sleep(1000);
-    for (const queue of rankedMatch){
-      const matches = await lolApi.MatchV5.list(puuid, Constants.RegionGroups.AMERICAS, {count: 5, queue});  // Takes last 15 matches
+    for (const queue of rankedMatch) {
+      const matches = await lolApi.MatchV5.list(
+        puuid,
+        Constants.RegionGroups.AMERICAS,
+        { count: 5, queue }
+      ); // Takes last 15 matches
       matchIds.push(...matches.response);
     }
     sleep(1000);
 
-    const matchStats = await Promise.all(   // Waits till all processes are done
+    const matchStats = await Promise.all(
+      // Waits till all processes are done
       matchIds.map(async (matchId) => {
-          const matchData = await lolApi.MatchV5.get(matchId, Constants.RegionGroups.AMERICAS);
-          sleep(100);
-          const participants = matchData.response.info.participants;
+        const matchData = await lolApi.MatchV5.get(
+          matchId,
+          Constants.RegionGroups.AMERICAS
+        );
+        sleep(100);
+        const participants = matchData.response.info.participants;
 
-          // Find the participant corresponding to the given PUUID
-          const playerStats = participants.find((p) => p.puuid === puuid);
+        // Find the participant corresponding to the given PUUID
+        const playerStats = participants.find((p) => p.puuid === puuid);
 
-          let kills;  // Get the kills count
-          if (playerStats){
-              kills = playerStats.kills;
-          }else {
-              kills = null;
-          }
+        let kills; // Get the kills count
+        if (playerStats) {
+          kills = playerStats.kills;
+        } else {
+          kills = null;
+        }
 
-          let assists;  // Get the assists count
-          if (playerStats){
-              assists = playerStats.assists;
-          }else {
-            assists = null;
-          }
+        let assists; // Get the assists count
+        if (playerStats) {
+          assists = playerStats.assists;
+        } else {
+          assists = null;
+        }
 
-          let deaths;  // Get the death count
-          if (playerStats){
-            deaths = playerStats.deaths;
-          }else {
-            deaths = null;
-          }
-          
-          let cs;  // Get the cs count
-          if (playerStats){
-            cs = playerStats.totalMinionsKilled + playerStats.neutralMinionsKilled;
-          }else {
-            cs = null;
-          }
+        let deaths; // Get the death count
+        if (playerStats) {
+          deaths = playerStats.deaths;
+        } else {
+          deaths = null;
+        }
 
-          let team_position;
-          if (playerStats){
-            team_position = playerStats.teamPosition;
-          }
+        let cs; // Get the cs count
+        if (playerStats) {
+          cs =
+            playerStats.totalMinionsKilled + playerStats.neutralMinionsKilled;
+        } else {
+          cs = null;
+        }
 
-          return {
-              matchId, kills, deaths, assists, cs, team_position
-          };
+        let team_position;
+        if (playerStats) {
+          team_position = playerStats.teamPosition;
+        }
+
+        return {
+          matchId,
+          kills,
+          deaths,
+          assists,
+          cs,
+          team_position,
+        };
       })
-  );
-
+    );
 
     const numGames = matchStats.length;
-    
+
     let totalKills = 0;
     let totalDeaths = 0;
     let totalAssists = 0;
     let totalCS = 0;
 
-    for (const game of matchStats){
+    for (const game of matchStats) {
       if (game.kills !== null) totalKills += game.kills;
       if (game.deaths !== null) totalDeaths += game.deaths;
       if (game.assists !== null) totalAssists += game.assists;
@@ -126,64 +137,76 @@ export async function MatchHistoryStats(riotId: string, tag: string){
     // sort by match id
     // do revsere sorting (highest match id)
     // check if you find a match id terminate the ENTIRE search (since its already in our database)
-    // since we know its gonna be the same 
-    // 
+    // since we know its gonna be the same
+    //
 
-    
     // Step 1: Fetch the player ID by matching riot_id and tag
     const { data: matchingPlayer, error: playerError } = await supabase
-    .from('players')
-    .select('id')
-    .eq('riot_id', riotId)
-    .eq('tag', tag)
-    .single(); // throw error if not found
+      .from("players")
+      .select("id")
+      .eq("riot_id", riotId)
+      .eq("tag", tag)
+      .single(); // throw error if not found
 
     if (playerError) {
-    console.error("Error querying player:", playerError);
-    return;
+      console.error("Error querying player:", playerError);
+      return;
     }
 
     if (!matchingPlayer) {
-    console.error("No player found with that riot_id and tag.");
-    return;
+      console.error("No player found with that riot_id and tag.");
+      return;
     }
 
     const playerId = matchingPlayer.id;
-    console.log("player PLEASE WORK", playerId)
+    console.log("player PLEASE WORK", playerId);
 
-      
-    const formattedStats = matchStats.map(match => ({
+    const formattedStats = matchStats.map((match) => ({
       match_id: match.matchId,
       kills: match.kills,
       deaths: match.deaths,
       assists: match.assists,
       cs: match.cs,
       team_position: match.team_position,
-      player_id: playerId
+      player_id: playerId,
     }));
 
     // This is to input into the database but commented out during testing
 
-    // const { data, error } = await supabase
-    //   .from('match_history')
-    //   .insert(formattedStats)
-    //   .select();
+    // Sort by match id
+    formattedStats.sort((a, b) => {
+      if (a.match_id < b.match_id) return 1;
+      if (a.match_id > b.match_id) return -1;
+      return 0;
+    });
 
-    //   if (error) {
-    //     console.error("Error inserting match stats:", error);
-    //   } else {
-    //     console.log("Match stats inserted successfully:", data);
-    //   }
+    // Insert each and stop at duplicate
+    for (const match of formattedStats) {
+      const { error } = await supabase.from("match_history").insert([match]);
+
+      if (error) {
+        // Check if the error is due to a duplicate match_id
+        if (error.code === "23505") {
+          break;
+        } else {
+          // Log any other errors
+          console.error("Error inserting match:", error);
+          break;
+        }
+      }
+    }
+
+    // Return averages
 
     return {
-
       // remove all this average stuff
       // instead will be using data from our database to calculate averages
-      averageKills, averageDeaths, averageAssists, averageCs
+      averageKills,
+      averageDeaths,
+      averageAssists,
+      averageCs,
     };
-
-} catch (error) {
-  console.error("Error fetching match history:", error);
-  
-}
+  } catch (error) {
+    console.error("Error fetching match history:", error);
+  }
 }
