@@ -1,4 +1,5 @@
 export interface Player {
+  puuid: string;
   name: string;
   tag: string;
   icon?: string;

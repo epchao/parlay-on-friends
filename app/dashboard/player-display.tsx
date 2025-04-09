@@ -121,11 +121,11 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
               <Image
                 src={currentPlayer.icon!}
                 alt="icon"
-                width={64}
-                height={64}
-                className="size-16 rounded-full lg:size-36"
+                width={256}
+                height={256}
+                className="size-16 rounded-full lg:size-24"
               />
-              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/80 px-2 py-1 rounded-xl lg:top-[85%]">
+              <p className="absolute top-[80%] left-1/2 transform -translate-x-1/2 bg-gray-600/80 px-2 py-1 rounded-xl lg:top-[85%] text-xs">
                 {currentPlayer.level}
               </p>
             </div>
@@ -134,15 +134,15 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             </p>
           </div>
           {/* Player ranks */}
-          <div className="flex justify-evenly text-center lg:flex-col lg:p-6 lg:items-center lg:gap-8 2xl:flex-row">
+          <div className="flex justify-evenly text-center mb-4 lg:mb-0 lg:flex-col lg:p-6 lg:items-center lg:gap-8 2xl:flex-row">
             <div className="flex flex-col items-center bg-gray-600 rounded-xl px-6 py-4 sm:px-10 sm:py-6 md:px-12 lg:size-48 lg:items-between 2xl:min-w-[10dvw] 2xl:p-0 2xl:justify-evenly">
               <p>Solo/Duo</p>
               {currentPlayer.soloDuoRankImage && (
                 <Image
                   src={currentPlayer.soloDuoRankImage!}
                   alt="Rank"
-                  width={64}
-                  height={64}
+                  width={256}
+                  height={256}
                   className="size-20 lg:size-24"
                 />
               )}
@@ -159,8 +159,8 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                   <Image
                     src={currentPlayer.flexRankImage!}
                     alt="Rank"
-                    width={64}
-                    height={64}
+                    width={256}
+                    height={256}
                     className="size-20 lg:size-24"
                   />
                 )}
@@ -180,20 +180,20 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             <Image
               src={currentPlayer.championImage!}
               alt="Champion"
-              width={64}
-              height={64}
-              className="size-20 m-auto lg:size-36"
+              width={256}
+              height={256}
+              className="size-20 m-auto lg:size-24"
             />
           </div>
           {/* Game data */}
           <div className="">
             {/* Time */}
-            <p className="bg-gray-600 py-4">
+            <p className="bg-gray-600 py-2 font-bold">
               Game Time: {calculateGameTime(time)}
             </p>
             {/* Blue Team Table */}
             <div>
-              <p className="bg-blue-600 py-4">Blue Team</p>
+              <p className="bg-blue-600 py-2 font-bold">Blue Team</p>
               <table className="w-full">
                 <thead className="border-b border-blue-600">
                   <tr className="">
@@ -213,7 +213,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             </div>
             {/* Red Team Table */}
             <div>
-              <p className="bg-red-600 py-4">Red Team</p>
+              <p className="bg-red-600 py-2 font-bold">Red Team</p>
               <table className="w-full">
                 <thead className="border-b border-red-600">
                   <tr>
