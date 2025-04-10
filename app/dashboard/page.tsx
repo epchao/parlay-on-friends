@@ -5,6 +5,7 @@ import BetCard from "./bet-card";
 import { MockBetData } from "./mock-bet-data";
 import PlayerDisplay from "./player-display";
 import SubmitBet from "./submit-bet";
+import { DashboardWrapper } from "./dashboard-wrapper";
 
 export default async function dashboardPage() {
   const supabase = await createClient();
@@ -34,21 +35,23 @@ export default async function dashboardPage() {
         </pre>
       </div>
 
-      <PlayerDisplay name="VirusFX" tag="NA1" />
+      <DashboardWrapper>
+        <PlayerDisplay name="WEEKLY QUITTER" tag="hiho" />
 
-      <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
-        {MockBetData.map((e, i) => (
-          <BetCard
-            key={i}
-            playerName={e.playerName}
-            stat={e.stat}
-            type={e.type}
-            playerImage={e.playerImage}
-          />
-        ))}
-      </div>
+        <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
+          {MockBetData.map((e, i) => (
+            <BetCard
+              key={i}
+              playerName={e.playerName}
+              stat={e.stat}
+              type={e.type}
+              playerImage={e.playerImage}
+            />
+          ))}
+        </div>
 
-      <SubmitBet balance={300} />
+        <SubmitBet balance={300} />
+      </DashboardWrapper>
     </div>
   );
 }

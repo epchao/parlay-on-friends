@@ -2,8 +2,9 @@
 
 import { Player } from "@/interfaces/player";
 import Image from "next/image";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useContext } from "react";
 import { calculateGameTime } from "../api/get-current-game-info/calculateGametime";
+import { DataContext } from "./dashboard-wrapper";
 
 interface PlayerDisplayProps {
   name: string;
@@ -20,8 +21,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const { dataLoaded, setDataLoaded } = useContext(DataContext);
 
   // Function to create JSX for teams
   const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
@@ -94,18 +94,24 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/check-game/${currentPlayer.puuid}`);
+        const response = await fetch(`/api/game/${currentPlayer.puuid}`);
         if (!response.ok) throw new Error("Failed to check game status");
 
         const { gameOngoing } = await response.json();
 
         if (!gameOngoing) {
-          setError("This player is currently not in game.");
+          setCurrentPlayer(null);
+          setTime(0);
+          setAllyColor("");
+          setAllies([]);
+          setEnemies([]);
+          setDataLoaded(false);
+          setError(null);
         }
       } catch (err) {
         console.error("Error checking game status", err);
       }
-    }, 300000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [dataLoaded]);
