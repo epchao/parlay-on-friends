@@ -34,16 +34,17 @@ export default async function dashboardPage() {
         </pre>
       </div>
 
-      <PlayerDisplay name="Jiwon" tag="Soap" />
+      <PlayerDisplay name="VirusFX" tag="NA1" />
 
-      <div className='grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2'>
+      <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
         {MockBetData.map((e, i) => (
           <BetCard
             key={i}
             playerName={e.playerName}
             stat={e.stat}
             type={e.type}
-            playerImage={e.playerImage} />
+            playerImage={e.playerImage}
+          />
         ))}
       </div>
 

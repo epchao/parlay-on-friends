@@ -10,7 +10,7 @@ export const roleAverages = async (role: string, playerId: string) => {
     const { data, error } = await supabase
       .from("match_history")
       .select(type)
-      .eq("team_position", role)
+      // .eq("team_position", role)
       .eq("player_id", playerId)
       .order("created_at", { ascending: false })
       .limit(20);

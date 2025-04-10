@@ -21,8 +21,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use ref to keep track of API calls
-  const isFetching = useRef(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // Function to create JSX for teams
   const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
@@ -36,27 +35,23 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
       <tr key={index}>
         <td className="w-1/5 px-1 py-2">{player.name}</td>
         <td className="w-1/5 px-1 py-2 ">{player.champion}</td>
-        <td className="w-1/5 px-1 py-2 ">{player.avgKda.toFixed(2)}</td>
-        <td className="w-1/5 px-1 py-2 ">{player.avgCs.toFixed(2)}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.avgKda?.toFixed(2)}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.avgCs?.toFixed(2)}</td>
         <td className="w-1/5 px-1 py-2 ">{player.soloDuoRank}</td>
       </tr>
     ));
   };
 
   useEffect(() => {
-    // @TODO: Ensure that if the current player isn't in game, then nothing will load.
     const fetchPlayer = async () => {
-      // Prevent overlapping calls
-      if (isFetching.current) return;
-      isFetching.current = true;
+      if (dataLoaded) return;
 
       try {
         const response = await fetch(
           `/api/get-current-game-info?riotId=${name}&tag=${tag}`
         );
-        if (!response.ok) {
-          throw new Error("Player not found or API error");
-        }
+        if (!response.ok) throw new Error("Player not found or API error");
+
         const data = await response.json();
 
         if (data.error === "Player not in game") {
@@ -71,28 +66,49 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           setError("This player does not exist");
           return;
         }
+
         setCurrentPlayer(data.currentPlayer);
         setTime(data.gameTime);
         setAllyColor(data.allyColor);
         setAllies(data.allies);
         setEnemies(data.enemies);
+        setDataLoaded(true);
+        setError(null);
       } catch (err) {
+        console.error("Error fetching player data", err);
         setError("Error fetching player data");
-        console.error(err);
       } finally {
-        isFetching.current = false;
         setLoading(false);
       }
     };
-
+    // Try to fetch game data from player
     fetchPlayer();
+    // Retry every minute
+    const retryInterval = setInterval(fetchPlayer, 60000);
+    return () => clearInterval(retryInterval);
+  }, [dataLoaded]);
 
-    // Set interval to fetch data every 60 seconds
-    const interval = setInterval(fetchPlayer, 60000);
+  // Wait until everything is loaded then check game is ongoing every 5 minutes
+  useEffect(() => {
+    if (!dataLoaded || !currentPlayer) return;
 
-    // Clear interval when component unmounts
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/check-game/${currentPlayer.puuid}`);
+        if (!response.ok) throw new Error("Failed to check game status");
+
+        const { gameOngoing } = await response.json();
+
+        if (!gameOngoing) {
+          setError("This player is currently not in game.");
+        }
+      } catch (err) {
+        console.error("Error checking game status", err);
+      }
+    }, 300000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [dataLoaded]);
 
   // Set interval to tick up every second
   useEffect(() => {

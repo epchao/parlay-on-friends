@@ -3,6 +3,7 @@ import { CurrentGameParticipantDTO } from "twisted/dist/models-dto";
 import { Player } from "../../../interfaces/player";
 import { fetchChampion } from "./fetchChampion";
 import { createClient } from "@/utils/supabase/server";
+import { MatchHistoryStats } from "./matchHistoryStats";
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
@@ -93,8 +94,6 @@ export async function fetchPlayerData(riotId: string, tag: string) {
       flexRankImage,
       champion: championName,
       championImage: `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/champion/${championImageName}.png`,
-      avgKda: 3.5, // Placeholder
-      avgCs: 200, // Placeholder
     };
 
     const supabase = await createClient();
@@ -113,6 +112,9 @@ export async function fetchPlayerData(riotId: string, tag: string) {
         .from("players")
         .insert({ id: PUUID, riot_id: riotId, tag });
     }
+
+    // const test = await MatchHistoryStats(riotId, tag);
+    // console.log(test);
 
     return playerData;
   } catch (error) {

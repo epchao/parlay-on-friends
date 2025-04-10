@@ -10,6 +10,6 @@ export interface Player {
   flexRankImage?: string;
   champion: string;
   championImage?: string;
-  avgKda: number;
-  avgCs: number;
+  avgKda?: number;
+  avgCs?: number;
 }
