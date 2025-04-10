@@ -3,11 +3,11 @@ import { checkGame } from "./checkGame";
 
 export async function GET(
   request: Request,
-  { params }: { params: { puuid: string } }
+  context: { params: { puuid: string } }
 ) {
-  const { puuid } = await params;
+  const { puuid } = context.params;
 
-  const gameOngoing = checkGame(puuid);
+  const gameOngoing = await checkGame(puuid);
 
   return NextResponse.json({ gameOngoing });
 }
