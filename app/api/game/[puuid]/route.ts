@@ -5,7 +5,7 @@ export async function GET(
   request: Request,
   context: { params: { puuid: string } }
 ) {
-  const { puuid } = context.params;
+  const { puuid } = await context.params;
 
   const gameOngoing = await checkGame(puuid);
 
