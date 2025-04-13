@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { checkGame } from "./checkGame";
 
-export async function GET(request: Request) {
-  const context = await request.json();
-  const { puuid } = context.params;
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ puuid: string }> }
+) {
+  const puuid = (await params).puuid;
 
   const gameOngoing = await checkGame(puuid);
 
