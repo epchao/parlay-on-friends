@@ -118,7 +118,6 @@ export async function fetchPlayerData(riotId: string, tag: string) {
 
     return playerData;
   } catch (error) {
-    console.error("Error fetching player data:", error);
-    return { error: "Internal Server Error", status: 500 };
+    return { error: "Player not in game", status: 200 };
   }
 }
