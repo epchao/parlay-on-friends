@@ -5,17 +5,7 @@ import { constants } from "buffer";
 import { createClient } from "@/utils/supabase/server";
 import { roleAverages } from "./roleAverages";
 
-/*
 
-load raw stats into supabase for the player (to avoid rate limit)
-then filter by player id and then calculate averages
-
-match_id foreign key
-
-put active player (like a streamer) intead of me to see cards and stuff
-
-.insert to put shit into supabase
-*/
 const sleep = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
@@ -64,39 +54,12 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
         // Find the participant corresponding to the given PUUID
         const playerStats = participants.find((p) => p.puuid === puuid);
 
-        let kills; // Get the kills count
-        if (playerStats) {
-          kills = playerStats.kills;
-        } else {
-          kills = null;
-        }
-
-        let assists; // Get the assists count
-        if (playerStats) {
-          assists = playerStats.assists;
-        } else {
-          assists = null;
-        }
-
-        let deaths; // Get the death count
-        if (playerStats) {
-          deaths = playerStats.deaths;
-        } else {
-          deaths = null;
-        }
-
-        let cs; // Get the cs count
-        if (playerStats) {
-          cs =
-            playerStats.totalMinionsKilled + playerStats.neutralMinionsKilled;
-        } else {
-          cs = null;
-        }
-
-        let team_position;
-        if (playerStats) {
-          team_position = playerStats.teamPosition;
-        }
+        const kills = playerStats?.kills ?? null;
+        const assists = playerStats?.assists ?? null;
+        const deaths = playerStats?.deaths ?? null;
+        const cs = (playerStats?.totalMinionsKilled ?? 0) + (playerStats?.neutralMinionsKilled ?? 0);
+        const team_position = playerStats?.teamPosition ?? null;
+        
 
         return {
           matchId,
@@ -105,28 +68,71 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
           assists,
           cs,
           team_position,
+          participants, //for other player stats
         };
       })
     );
 
-    const numGames = matchStats.length;
+    // get the first match and extract the other 9 players
+    const firstMatchData = await lolApi.MatchV5.get(
+      matchIds[0],
+      Constants.RegionGroups.AMERICAS
+    );
+    const firstParticipants = firstMatchData.response.info.participants;
 
-    let totalKills = 0;
-    let totalDeaths = 0;
-    let totalAssists = 0;
-    let totalCS = 0;
+    // exclude the target player's PUUID
+    const otherPlayers = firstParticipants.filter((p) => p.puuid !== puuid);
+    const otherPUUIDs = otherPlayers.map((p) => p.puuid);
 
-    for (const game of matchStats) {
-      if (game.kills !== null) totalKills += game.kills;
-      if (game.deaths !== null) totalDeaths += game.deaths;
-      if (game.assists !== null) totalAssists += game.assists;
-      if (game.cs !== null) totalCS += game.cs;
+
+    const otherPlayersAverages: Record<string, any> = {};
+
+    for (const otherPuuid of otherPUUIDs) {
+      const matchIdsForOther = await lolApi.MatchV5.list(
+        otherPuuid,
+        Constants.RegionGroups.AMERICAS,
+        { count: 5, queue: 420 }  // last 5 solo/duo games
+      );
+
+      const otherMatchStats = await Promise.all(
+        matchIdsForOther.response.map(async (matchId) => {
+          const matchData = await lolApi.MatchV5.get(
+            matchId,
+            Constants.RegionGroups.AMERICAS
+          );
+          const player = matchData.response.info.participants.find(
+            (p) => p.puuid === otherPuuid
+          );
+
+          return {
+            kills: player?.kills ?? 0,
+            deaths: player?.deaths ?? 0,
+            assists: player?.assists ?? 0,
+            cs: (player?.totalMinionsKilled ?? 0) + (player?.neutralMinionsKilled ?? 0),
+          };
+        })
+      );
+
+      const numGames = otherMatchStats.length;
+
+      const totalKills = otherMatchStats.reduce((acc, g) => acc + g.kills, 0);
+      const totalDeaths = otherMatchStats.reduce((acc, g) => acc + g.deaths, 0);
+      const totalAssists = otherMatchStats.reduce((acc, g) => acc + g.assists, 0);
+      const totalCs = otherMatchStats.reduce((acc, g) => acc + g.cs, 0);
+
+      const averageKills = parseFloat((totalKills / numGames).toFixed(1));
+      const averageDeaths = parseFloat((totalDeaths / numGames).toFixed(1));
+      const averageAssists = parseFloat((totalAssists / numGames).toFixed(1));
+      const averageCs = parseFloat((totalCs / numGames).toFixed(1));
+
+      otherPlayersAverages[otherPuuid] = {
+        averageKills,
+        averageDeaths,
+        averageAssists,
+        averageCs,
+      };
     }
 
-    const averageKills = parseFloat((totalKills / numGames).toFixed(1));
-    const averageDeaths = parseFloat((totalDeaths / numGames).toFixed(1));
-    const averageAssists = parseFloat((totalAssists / numGames).toFixed(1));
-    const averageCs = parseFloat((totalCS / numGames).toFixed(1));
 
     console.log("Searching for player with Riot ID:", riotId, "and Tag:", tag);
 
@@ -195,7 +201,11 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
       }
     }
 
-    return roleAverages("JUNGLE", playerId);
+    //console.log("Other Players' Averages:", otherPlayersAverages);
+    return {
+      roleAverages: await roleAverages("JUNGLE", playerId),
+      otherPlayersAverages
+    };
   } catch (error) {
     console.error("Error fetching match history:", error);
   }
