@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 
-export const roleAverages = async (role: string, playerId: string) => {
+export const currentPlayerAverages = async (playerId: string) => {
   const supabase = await createClient();
   const types = ["kills", "deaths", "assists", "cs"] as const;
 
