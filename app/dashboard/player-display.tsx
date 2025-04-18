@@ -86,8 +86,8 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
     };
     // Try to fetch game data from player
     fetchPlayer();
-    // Retry every minute
-    const retryInterval = setInterval(fetchPlayer, 60000);
+    // Retry every 2 minutes
+    const retryInterval = setInterval(fetchPlayer, 120000);
     return () => clearInterval(retryInterval);
   }, [dataLoaded]);
 
