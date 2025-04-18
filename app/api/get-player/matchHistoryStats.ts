@@ -15,7 +15,6 @@ const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
 export async function MatchHistoryStats(riotId: string, tag: string) {
   try {
-    sleep(1000);
     const account = await riotApi.Account.getByRiotId(
       riotId as string,
       tag as string,
@@ -30,7 +29,6 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
     const rankedMatch = [420]; // Solo/Duo and 440 for Flex
     let matchIds: string[] = [];
 
-    sleep(1000);
     for (const queue of rankedMatch) {
       const matches = await lolApi.MatchV5.list(
         puuid,
@@ -39,7 +37,6 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
       ); // Takes last 5 matches
       matchIds.push(...matches.response);
     }
-    sleep(1000);
 
     const matchStats = await Promise.all(
       // Waits till all processes are done
@@ -48,7 +45,6 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
           matchId,
           Constants.RegionGroups.AMERICAS
         );
-        sleep(100);
 
         const participant = matchData.response.info.participants;
 
@@ -91,6 +87,7 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
     const otherPlayersAverages: Record<string, any> = {};
 
     for (const otherPuuid of otherPUUIDs) {
+      await sleep(2500);
       const matchIdsForOther = await lolApi.MatchV5.list(
         otherPuuid,
         Constants.RegionGroups.AMERICAS,
