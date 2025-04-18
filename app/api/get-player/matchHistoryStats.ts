@@ -80,12 +80,13 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
     );
 
     // Players in the game
-    const participants = game.response.participants as CurrentGameParticipantDTO[];
+    const participants = game.response
+      .participants as CurrentGameParticipantDTO[];
 
     // Filter out the target player and get PUUIDs of the 9 other players
     const otherPUUIDs = participants
-    .filter((p) => p.puuid !== puuid)
-    .map((p) => p.puuid);
+      .filter((p) => p.puuid !== puuid)
+      .map((p) => p.puuid);
 
     const otherPlayersAverages: Record<string, any> = {};
 
@@ -209,7 +210,7 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
 
     //console.log("Other Players' Averages:", otherPlayersAverages);
     return {
-      roleAverages: await currentPlayerAverages(playerId),
+      currentPlayerAverage: await currentPlayerAverages(playerId),
       otherPlayersAverages,
     };
   } catch (error) {

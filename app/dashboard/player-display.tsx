@@ -140,7 +140,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
       {/* Main Container */}
       <main className="bg-gray-700 min-w-[90dvw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm xl:text-base">
         {/* Player info container */}
-        <section className="bg-gray-800 m-3 row-span-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
+        <section className="bg-gray-800 m-3 row-s n-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
           {/* Player icon */}
           <div className="flex flex-col items-center">
             <div className="relative mb-6 sm:mb-4 lg:mb-6 xl:mb-8">
@@ -226,7 +226,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                     <th className="w-1/5 p-1 ">Player</th>
                     <th className="w-1/5 p-1 ">Champion</th>
                     <th className="w-1/5 p-1 ">Avg KDA</th>
-                    <th className="w-1/5 p-1 ">Avg CS/min</th>
+                    <th className="w-1/5 p-1 ">Avg CS</th>
                     <th className="w-1/5 p-1 ">Rank</th>
                   </tr>
                 </thead>
@@ -246,7 +246,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                     <th className="w-1/5 p-1">Player</th>
                     <th className="w-1/5 p-1">Champion</th>
                     <th className="w-1/5 p-1">Avg KDA</th>
-                    <th className="w-1/5 p-1">Avg CS/min</th>
+                    <th className="w-1/5 p-1">Avg CS</th>
                     <th className="w-1/5 p-1">Rank</th>
                   </tr>
                 </thead>

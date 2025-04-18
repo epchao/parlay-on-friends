@@ -23,8 +23,5 @@ export async function GET(request: Request) {
     );
   }
 
-  const test = await MatchHistoryStats(riotId, tag);
-  console.log(test);
-
   return NextResponse.json(playerData);
 }

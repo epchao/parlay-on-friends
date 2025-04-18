@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
 import { RiotApi, LolApi, Constants } from "twisted";
 import { fetchPlayerData } from "../get-player/fetchPlayerData";
+import { MatchHistoryStats } from "../get-player/matchHistoryStats";
+import { Player } from "@/interfaces/player";
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
 export async function GET(request: Request) {
+  console.log("starting benchmark");
+  const start = Date.now();
+
+  const logTime = (label: string) => {
+    console.log(`${label}: ${Date.now() - start}ms`);
+  };
+
   // Get search params
   const { searchParams } = new URL(request.url);
   const riotId = searchParams.get("riotId");
   const tag = searchParams.get("tag");
 
-  // If params not given
   if (!riotId || !tag) {
     return NextResponse.json(
       { error: "Missing riotId or tag" },
@@ -20,60 +28,54 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Get account details
+    logTime("Start fetching account");
     const account = await riotApi.Account.getByRiotId(
       riotId as string,
       tag as string,
       Constants.RegionGroups.AMERICAS
     );
+    logTime("Fetched account");
 
-    // If no response
     if (!account.response.puuid) {
       return NextResponse.json({ error: "Player not found" });
     }
 
-    // Get PUUID from account details
     const currentPlayerPuuid = account.response.puuid;
+
     try {
+      logTime("Start fetching active game");
       const details = await lolApi.SpectatorV5.activeGame(
         currentPlayerPuuid,
         Constants.Regions.AMERICA_NORTH
       );
+      logTime("Fetched active game");
 
-      // Check not RANKED
-      // 420 = solo duo
-      // 440 = flex
-      if (
-        details.response.gameQueueConfigId !== 420 &&
-        details.response.gameQueueConfigId !== 440
-      ) {
-        console.log(details.response.gameQueueConfigId);
+      if (![420, 440].includes(details.response.gameQueueConfigId)) {
         return NextResponse.json({
           error: "Player not currently playing a ranked match",
         });
       }
 
-      // Get game time
       const gameTime = details.response.gameStartTime;
-
-      // Hold current player, blue team, and red team
-      let currentPlayer = {};
+      let currentPlayer: Player = {} as Player;
       let currentPlayerTeam = 0;
-      const blueTeam = [];
-      const redTeam = [];
+      const blueTeam: Player[] = [];
+      const redTeam: Player[] = [];
 
-      // List of partcipants from Riot API
-      const participants = details.response.participants;
+      logTime("Start fetching participants");
+      const participantPromises = details.response.participants.map(
+        async (participant: any) => {
+          const [name, tag] = participant.riotId.split("#");
+          const data = await fetchPlayerData(name, tag);
+          return { participant, data };
+        }
+      );
 
-      // Assign each participant into respective group
-      for (const participant of participants) {
-        const participantName = participant.riotId.split("#");
-        const participantData = await fetchPlayerData(
-          participantName[0],
-          participantName[1]
-        );
+      const resolvedParticipants = await Promise.all(participantPromises);
+      logTime("Fetched participants");
 
-        if ("error" in participantData) {
+      for (const { participant, data } of resolvedParticipants) {
+        if ("error" in data) {
           return NextResponse.json(
             { error: "Error finding all players" },
             { status: 404 }
@@ -81,36 +83,65 @@ export async function GET(request: Request) {
         }
 
         if (participant.puuid === currentPlayerPuuid) {
-          currentPlayer = participantData;
+          currentPlayer = data;
           currentPlayerTeam = participant.teamId;
         } else if (participant.teamId === 100) {
-          blueTeam.push(participantData);
+          blueTeam.push(data);
         } else {
-          redTeam.push(participantData);
+          redTeam.push(data);
         }
       }
+
       const allyColor = currentPlayerTeam === 100 ? "blue" : "red";
       const enemyColor = allyColor === "blue" ? "red" : "blue";
-
       const allies = currentPlayerTeam === 100 ? blueTeam : redTeam;
       const enemies = currentPlayerTeam === 100 ? redTeam : blueTeam;
 
-      const gameInfo = {
+      logTime("Start fetching match history stats");
+      const stats = await MatchHistoryStats(riotId, tag);
+      logTime("Fetched match history stats");
+
+      if (!stats || !stats.otherPlayersAverages) {
+        return NextResponse.json({ error: "Failed grabbing averages" });
+      }
+
+      const kills = stats.currentPlayerAverage.kills;
+      const assists = stats.currentPlayerAverage.assists;
+      const deaths = stats.currentPlayerAverage.deaths;
+      currentPlayer.avgKda = (kills + assists) / deaths;
+      currentPlayer.avgCs = stats.currentPlayerAverage.cs;
+
+      for (const ally of allies) {
+        const allyStats = stats.otherPlayersAverages[ally.puuid];
+        ally.avgKda =
+          (allyStats.averageKills + allyStats.averageAssists) /
+          allyStats.averageDeaths;
+        ally.avgCs = allyStats.averageCs;
+      }
+
+      for (const enemy of enemies) {
+        const enemyStats = stats.otherPlayersAverages[enemy.puuid];
+        enemy.avgKda =
+          (enemyStats.averageKills + enemyStats.averageAssists) /
+          enemyStats.averageDeaths;
+        enemy.avgCs = enemyStats.averageCs;
+      }
+
+      logTime("Finished processing everything");
+      console.log("ending benchmark");
+
+      return NextResponse.json({
         gameTime,
         currentPlayer,
         allyColor,
         allies,
         enemyColor,
         enemies,
-      };
-
-      return NextResponse.json(gameInfo);
+      });
     } catch (error: any) {
-      // Catch 404 error (player not in a game)
       if (error.status === 404) {
         return NextResponse.json({ error: "Player not in game" });
       }
-      // Other errors
       console.error("Error fetching game data:", error);
     }
   } catch (error) {
