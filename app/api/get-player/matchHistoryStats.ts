@@ -4,8 +4,7 @@ import { Player } from "../../../interfaces/player";
 import { promiseHooks } from "v8";
 import { constants } from "buffer";
 import { createClient } from "@/utils/supabase/server";
-import { roleAverages } from "./roleAverages";
-
+import { currentPlayerAverages } from "./currentPlayerAverages";
 
 const sleep = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -59,9 +58,10 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
         const kills = playerStats?.kills ?? null;
         const assists = playerStats?.assists ?? null;
         const deaths = playerStats?.deaths ?? null;
-        const cs = (playerStats?.totalMinionsKilled ?? 0) + (playerStats?.neutralMinionsKilled ?? 0);
+        const cs =
+          (playerStats?.totalMinionsKilled ?? 0) +
+          (playerStats?.neutralMinionsKilled ?? 0);
         const team_position = playerStats?.teamPosition ?? null;
-        
 
         return {
           matchId,
@@ -87,14 +87,13 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
     .filter((p) => p.puuid !== puuid)
     .map((p) => p.puuid);
 
-
     const otherPlayersAverages: Record<string, any> = {};
 
     for (const otherPuuid of otherPUUIDs) {
       const matchIdsForOther = await lolApi.MatchV5.list(
         otherPuuid,
         Constants.RegionGroups.AMERICAS,
-        { count: 5, queue: 420 }  // last 5 solo/duo games
+        { count: 5, queue: 420 } // last 5 solo/duo games
       );
 
       const otherMatchStats = await Promise.all(
@@ -111,7 +110,9 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
             kills: player?.kills ?? 0,
             deaths: player?.deaths ?? 0,
             assists: player?.assists ?? 0,
-            cs: (player?.totalMinionsKilled ?? 0) + (player?.neutralMinionsKilled ?? 0),
+            cs:
+              (player?.totalMinionsKilled ?? 0) +
+              (player?.neutralMinionsKilled ?? 0),
           };
         })
       );
@@ -120,7 +121,10 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
 
       const totalKills = otherMatchStats.reduce((acc, g) => acc + g.kills, 0);
       const totalDeaths = otherMatchStats.reduce((acc, g) => acc + g.deaths, 0);
-      const totalAssists = otherMatchStats.reduce((acc, g) => acc + g.assists, 0);
+      const totalAssists = otherMatchStats.reduce(
+        (acc, g) => acc + g.assists,
+        0
+      );
       const totalCs = otherMatchStats.reduce((acc, g) => acc + g.cs, 0);
 
       const averageKills = parseFloat((totalKills / numGames).toFixed(1));
@@ -135,7 +139,6 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
         averageCs,
       };
     }
-
 
     console.log("Searching for player with Riot ID:", riotId, "and Tag:", tag);
 
@@ -206,8 +209,8 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
 
     //console.log("Other Players' Averages:", otherPlayersAverages);
     return {
-      roleAverages: await roleAverages("JUNGLE", playerId),
-      otherPlayersAverages
+      roleAverages: await currentPlayerAverages(playerId),
+      otherPlayersAverages,
     };
   } catch (error) {
     console.error("Error fetching match history:", error);

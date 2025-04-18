@@ -2,7 +2,7 @@
 
 import { Player } from "@/interfaces/player";
 import Image from "next/image";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { calculateGameTime } from "../api/get-current-game-info/calculateGametime";
 import { DataContext } from "./dashboard-wrapper";
 
@@ -42,9 +42,11 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
     ));
   };
 
+  const initialFetchDone = useRef(false);
+
   useEffect(() => {
     const fetchPlayer = async () => {
-      if (dataLoaded) return;
+      if (initialFetchDone.current || dataLoaded) return;
 
       try {
         const response = await fetch(
@@ -74,6 +76,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         setEnemies(data.enemies);
         setDataLoaded(true);
         setError(null);
+        initialFetchDone.current = true;
       } catch (err) {
         console.error("Error fetching player data", err);
         setError("Error fetching player data");
@@ -107,11 +110,12 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           setEnemies([]);
           setDataLoaded(false);
           setError(null);
+          initialFetchDone.current = false;
         }
       } catch (err) {
         console.error("Error checking game status", err);
       }
-    }, 60000);
+    }, 360000);
 
     return () => clearInterval(interval);
   }, [dataLoaded]);
