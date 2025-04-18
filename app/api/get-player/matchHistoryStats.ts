@@ -1,4 +1,5 @@
 import { RiotApi, LolApi, Constants } from "twisted";
+import { CurrentGameParticipantDTO } from "twisted/dist/models-dto";
 import { Player } from "../../../interfaces/player";
 import { promiseHooks } from "v8";
 import { constants } from "buffer";
@@ -36,7 +37,7 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
         puuid,
         Constants.RegionGroups.AMERICAS,
         { count: 5, queue }
-      ); // Takes last 15 matches
+      ); // Takes last 5 matches
       matchIds.push(...matches.response);
     }
     sleep(1000);
@@ -49,10 +50,11 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
           Constants.RegionGroups.AMERICAS
         );
         sleep(100);
-        const participants = matchData.response.info.participants;
+
+        const participant = matchData.response.info.participants;
 
         // Find the participant corresponding to the given PUUID
-        const playerStats = participants.find((p) => p.puuid === puuid);
+        const playerStats = participant.find((p) => p.puuid === puuid);
 
         const kills = playerStats?.kills ?? null;
         const assists = playerStats?.assists ?? null;
@@ -68,21 +70,22 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
           assists,
           cs,
           team_position,
-          participants, //for other player stats
         };
       })
     );
 
-    // get the first match and extract the other 9 players
-    const firstMatchData = await lolApi.MatchV5.get(
-      matchIds[0],
-      Constants.RegionGroups.AMERICAS
+    const game = await lolApi.SpectatorV5.activeGame(
+      puuid,
+      Constants.Regions.AMERICA_NORTH
     );
-    const firstParticipants = firstMatchData.response.info.participants;
 
-    // exclude the target player's PUUID
-    const otherPlayers = firstParticipants.filter((p) => p.puuid !== puuid);
-    const otherPUUIDs = otherPlayers.map((p) => p.puuid);
+    // Players in the game
+    const participants = game.response.participants as CurrentGameParticipantDTO[];
+
+    // Filter out the target player and get PUUIDs of the 9 other players
+    const otherPUUIDs = participants
+    .filter((p) => p.puuid !== puuid)
+    .map((p) => p.puuid);
 
 
     const otherPlayersAverages: Record<string, any> = {};
