@@ -37,7 +37,7 @@ export default async function dashboardPage() {
       </div>
 
       <DashboardWrapper>
-        <PlayerDisplay name="WEEKLY QUITTER" tag="hiho" />
+        <PlayerDisplay name="Soundify" tag="NA1" />
         <BetCards />
         <SubmitBet />
       </DashboardWrapper>
