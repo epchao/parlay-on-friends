@@ -108,8 +108,11 @@ export async function GET(request: Request) {
       const kills = stats.currentPlayerAverage.kills;
       const assists = stats.currentPlayerAverage.assists;
       const deaths = stats.currentPlayerAverage.deaths;
+      const cs = stats.currentPlayerAverage.cs;
       currentPlayer.avgKda = (kills + assists) / deaths;
-      currentPlayer.avgCs = stats.currentPlayerAverage.cs;
+      currentPlayer.avgCs = cs;
+
+      const currentPlayerAverages = { kills, deaths, assists, cs };
 
       for (const ally of allies) {
         const allyStats = stats.otherPlayersAverages[ally.puuid];
@@ -133,6 +136,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         gameTime,
         currentPlayer,
+        currentPlayerAverages,
         allyColor,
         allies,
         enemyColor,

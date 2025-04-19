@@ -21,7 +21,8 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { dataLoaded, setDataLoaded } = useContext(DataContext);
+  const { dataLoaded, setDataLoaded, setPlayerDetails } =
+    useContext(DataContext);
 
   // Function to create JSX for teams
   const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
@@ -70,6 +71,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         }
 
         setCurrentPlayer(data.currentPlayer);
+        setPlayerDetails([data.currentPlayer, data.currentPlayerAverages]);
         setTime(data.gameTime);
         setAllyColor(data.allyColor);
         setAllies(data.allies);
@@ -104,6 +106,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
         if (!gameOngoing) {
           setCurrentPlayer(null);
+          setPlayerDetails([]);
           setTime(0);
           setAllyColor("");
           setAllies([]);

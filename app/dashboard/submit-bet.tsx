@@ -94,7 +94,7 @@ export default function SubmitBet() {
   };
 
   return (
-    true && (
+    dataLoaded && (
       <div className="bg-gray-700 p-6 rounded-2xl max-w-[20rem] sm:max-w-sm shadow-lg space-y-4">
         <div>
           <p className="text-lg text-white font-semibold">
