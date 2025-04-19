@@ -17,7 +17,6 @@ const BetCards = (props: Props) => {
 
   return (
     <div>
-      <div>{JSON.stringify(averages)}</div>
       <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
         {Object.entries(averages).map(([type, stat], i) => (
           <BetCard
