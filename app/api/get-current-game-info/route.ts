@@ -143,16 +143,10 @@ export async function GET(request: Request) {
         enemies,
       });
     } catch (error: any) {
-      if (error.status === 404) {
-        return NextResponse.json({ error: "Player not in game" });
-      }
       console.error("Error fetching game data:", error);
+      return NextResponse.json({ error: "Player not in game" });
     }
   } catch (error) {
-    console.error("Error fetching game data:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Player not in game" });
   }
 }

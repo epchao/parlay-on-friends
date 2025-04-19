@@ -8,7 +8,10 @@ import { Player } from "@/interfaces/player";
 type Props = {};
 
 const BetCards = (props: Props) => {
-  const { playerDetails } = useContext(DataContext);
+  const { dataLoaded, playerDetails } = useContext(DataContext);
+
+  if (!dataLoaded || playerDetails.length < 2) return null;
+
   const currentPlayer: Player = playerDetails[0] as Player;
   const averages: Record<string, number> = playerDetails[1] as Record<
     string,

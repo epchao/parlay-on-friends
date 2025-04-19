@@ -37,7 +37,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         <td className="w-1/5 px-1 py-2">{player.name}</td>
         <td className="w-1/5 px-1 py-2 ">{player.champion}</td>
         <td className="w-1/5 px-1 py-2 ">{player.avgKda?.toFixed(2)}</td>
-        <td className="w-1/5 px-1 py-2 ">{player.avgCs?.toFixed(2)}</td>
+        <td className="w-1/5 px-1 py-2 ">{player.avgCs?.toFixed(0)}</td>
         <td className="w-1/5 px-1 py-2 ">{player.soloDuoRank}</td>
       </tr>
     ));
@@ -53,7 +53,10 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         const response = await fetch(
           `/api/get-current-game-info?riotId=${name}&tag=${tag}`
         );
-        if (!response.ok) throw new Error("Player not found or API error");
+        if (!response.ok) {
+          setError("Problem fetching player. Please try again later.");
+          return;
+        }
 
         const data = await response.json();
 
