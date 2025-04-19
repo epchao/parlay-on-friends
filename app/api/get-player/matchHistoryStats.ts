@@ -87,6 +87,7 @@ export async function MatchHistoryStats(riotId: string, tag: string) {
     const otherPlayersAverages: Record<string, any> = {};
 
     for (const otherPuuid of otherPUUIDs) {
+      // 2.5 second delay each, 25 second delay total
       await sleep(2500);
       const matchIdsForOther = await lolApi.MatchV5.list(
         otherPuuid,

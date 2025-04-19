@@ -1,5 +1,5 @@
 "use client";
-import { ChangeEvent, useContext, useState } from "react";
+import { ChangeEvent, useContext, useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { DataContext } from "./dashboard-wrapper";
 
@@ -8,13 +8,12 @@ import { DataContext } from "./dashboard-wrapper";
 // Update component visually to use dynamic data
 // Use actual data for request body
 
-interface SubmitBetProps {
-  balance: number;
-}
-
-export default function SubmitBet({ balance }: SubmitBetProps) {
+export default function SubmitBet() {
   const { dataLoaded } = useContext(DataContext);
+  const [balance, setBalance] = useState(0);
   const [betAmt, setAmt] = useState(0);
+  // Connect to db
+  const supabase = createClient();
   const updateInput = (event: ChangeEvent<HTMLInputElement>) => {
     const val = Number(event.target.value);
     if (!isNaN(val)) {
@@ -22,11 +21,22 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
     }
   };
 
+  const getBalance = async () => {
+    try {
+      const response = await fetch("/api/user/balance");
+      const data = await response.json();
+      setBalance(data.balance);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getBalance();
+  }, []);
+
   // User presses submit button
   const submitHandler = async () => {
-    // Connect to db
-    const supabase = createClient();
-
     // Get user
     const {
       data: { user },
@@ -49,7 +59,8 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
         // Filler data
         body: JSON.stringify({
           user_id: user.id,
-          player_id: 1,
+          player_id:
+            "EhNCYvLHcwLK-5HCafdeWMxggYyremmtVBDNoancXaBYG1F-2vyEPHiIlKREzq2LfDHvckrwUUSeiA",
           selections: [
             {
               stat: "KILLS",
@@ -64,7 +75,7 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
               type: "UNDER",
             },
           ],
-          amount: 100,
+          amount: betAmt,
         }),
       });
 
@@ -75,13 +86,15 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
 
       const data = await response.json();
       console.log("Submitted to DB", data);
+      setBalance(data.newBalance);
+      setAmt(0);
     } catch (error) {
       console.error("Unexpected error", error);
     }
   };
 
   return (
-    dataLoaded && (
+    true && (
       <div className="bg-gray-700 p-6 rounded-2xl max-w-[20rem] sm:max-w-sm shadow-lg space-y-4">
         <div>
           <p className="text-lg text-white font-semibold">

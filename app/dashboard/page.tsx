@@ -50,7 +50,7 @@ export default async function dashboardPage() {
           ))}
         </div>
 
-        <SubmitBet balance={300} />
+        <SubmitBet />
       </DashboardWrapper>
     </div>
   );
