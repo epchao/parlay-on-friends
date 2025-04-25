@@ -9,7 +9,7 @@ import { DataContext } from "./dashboard-wrapper";
 // Use actual data for request body
 
 export default function SubmitBet() {
-  const { dataLoaded } = useContext(DataContext);
+  const { dataLoaded, userBets } = useContext(DataContext);
   const [balance, setBalance] = useState(0);
   const [betAmt, setAmt] = useState(0);
   // Connect to db
@@ -61,20 +61,7 @@ export default function SubmitBet() {
           user_id: user.id,
           player_id:
             "EhNCYvLHcwLK-5HCafdeWMxggYyremmtVBDNoancXaBYG1F-2vyEPHiIlKREzq2LfDHvckrwUUSeiA",
-          selections: [
-            {
-              stat: "KILLS",
-              type: "OVER",
-            },
-            {
-              stat: "DEATHS",
-              type: "UNDER",
-            },
-            {
-              stat: "ASSISTS",
-              type: "UNDER",
-            },
-          ],
+          selections: userBets,
           amount: betAmt,
         }),
       });

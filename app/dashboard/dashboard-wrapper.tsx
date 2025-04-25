@@ -8,7 +8,7 @@ type DataContextProps = {
   playerDetails: Record<string, any>[];
   setPlayerDetails: React.Dispatch<React.SetStateAction<Record<string, any>[]>>;
   userBets: Record<string, any>;
-  setUserBets: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  setUserBets: React.Dispatch<React.SetStateAction<Record<string, string>[]>>;
 };
 
 type Props = { children: React.ReactNode };
@@ -25,7 +25,7 @@ export const DataContext = createContext<DataContextProps>({
 export const DashboardWrapper = ({ children }: Props) => {
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [playerDetails, setPlayerDetails] = useState<Record<string, any>[]>([]);
-  const [userBets, setUserBets] = useState<Record<string, any>>({});
+  const [userBets, setUserBets] = useState<Record<string, string>[]>([]);
   return (
     <DataContext.Provider
       value={{
