@@ -6,8 +6,7 @@ import { Bet } from "@/interfaces/bet";
 import { DataContext } from "./dashboard-wrapper";
 
 const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
-  const { dataLoaded, setUserBets, resetBet, setResetBet } =
-    useContext(DataContext);
+  const { dataLoaded, setUserBets, resetBet } = useContext(DataContext);
   const [selected, setSelected] = useState("");
 
   useEffect(() => {
@@ -79,7 +78,7 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
         {/* Buttons */}
         <div className="absolute bottom-0 left-0 w-full h-12 flex">
           <button
-            className={`flex-1 bg-gray-900 text-white ${selected === "LESS" ? "bg-red-600" : ""} 
+            className={`flex-1 bg-gray-900 text-white ${selected === "LESS" ? "bg-red-700" : ""} 
             tracking-tighter font-bold hover: transition-colors duration-500 ease-in-out`}
             onClick={() => {
               handleBetSelection("LESS");
@@ -88,7 +87,7 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
             Less
           </button>
           <button
-            className={`flex-1 bg-gray-900 text-white ${selected === "MORE" ? "bg-lime-600" : ""}
+            className={`flex-1 bg-gray-900 text-white ${selected === "MORE" ? "bg-green-700" : ""}
                     tracking-tighter font-bold hover: transition-colors duration-500 ease-in-out`}
             onClick={() => {
               handleBetSelection("MORE");
