@@ -1,8 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { InfoIcon } from "lucide-react";
 import { redirect } from "next/navigation";
-import BetCard from "./bet-card";
-import { MockBetData } from "./mock-bet-data";
 import PlayerDisplay from "./player-display";
 import SubmitBet from "./submit-bet";
 import { DashboardWrapper } from "./dashboard-wrapper";
@@ -37,7 +35,7 @@ export default async function dashboardPage() {
       </div>
 
       <DashboardWrapper>
-        <PlayerDisplay name="HAcKeDoBJecT" tag="NA1" />
+        <PlayerDisplay name="Diamond" tag="lmao" />
         <BetCards />
         <SubmitBet />
       </DashboardWrapper>

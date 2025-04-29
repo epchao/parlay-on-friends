@@ -1,13 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Bet } from "@/interfaces/bet";
 import { DataContext } from "./dashboard-wrapper";
 
 const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
-  const { dataLoaded, userBets, setUserBets } = useContext(DataContext);
+  const { dataLoaded, setUserBets, resetBet, setResetBet } =
+    useContext(DataContext);
   const [selected, setSelected] = useState("");
+
+  useEffect(() => {
+    if (resetBet) {
+      setSelected("");
+    }
+  }, [resetBet]);
 
   const handleBetSelection = (betType: "LESS" | "MORE") => {
     const betKey = type.toLowerCase();

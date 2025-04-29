@@ -2,7 +2,6 @@
 import React, { useContext } from "react";
 import { DataContext } from "./dashboard-wrapper";
 import BetCard from "./bet-card";
-import { MockBetData } from "./mock-bet-data";
 import { Player } from "@/interfaces/player";
 
 type Props = {};

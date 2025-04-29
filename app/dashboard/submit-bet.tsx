@@ -9,7 +9,9 @@ import { DataContext } from "./dashboard-wrapper";
 // Use actual data for request body
 
 export default function SubmitBet() {
-  const { dataLoaded, userBets } = useContext(DataContext);
+  const { dataLoaded, userBets, setUserBets, setResetBet } =
+    useContext(DataContext);
+  const multipler = userBets.length > 0 ? userBets.length + 1 : 0;
   const [balance, setBalance] = useState(0);
   const [betAmt, setAmt] = useState(0);
   // Connect to db
@@ -75,6 +77,12 @@ export default function SubmitBet() {
       console.log("Submitted to DB", data);
       setBalance(data.newBalance);
       setAmt(0);
+      setUserBets([]);
+      setResetBet(true);
+
+      setTimeout(() => {
+        setResetBet(false);
+      }, 100);
     } catch (error) {
       console.error("Unexpected error", error);
     }
@@ -91,7 +99,10 @@ export default function SubmitBet() {
 
         <div>
           <p className="text-lg text-white font-semibold">
-            Current Multiplier: <span className="text-green-400">2x</span>
+            Current Multiplier:{" "}
+            <span className="text-green-400">
+              {multipler > 0 ? multipler + "x" : "None"}
+            </span>
           </p>
         </div>
 
@@ -108,7 +119,7 @@ export default function SubmitBet() {
 
             <div className="bg-gray-800 rounded-md px-4 py-2 text-green-400 font-medium w-1/2">
               <span className="text-white">To win:</span> $
-              {betAmt && betAmt * 2}
+              {betAmt && betAmt * multipler}
             </div>
           </div>
 
