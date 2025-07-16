@@ -2,7 +2,7 @@
 import { ChangeEvent, useContext, useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { DataContext } from "./dashboard-wrapper";
-import Toast from "./toast";
+import Toast from "../../components/toast";
 
 export interface SubmitBetProps {
   playerId: string;

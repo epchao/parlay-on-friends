@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import Toast from '@/app/dashboard/toast'
+import Toast from '@/components/toast'
 
 interface NotificationData {
   id: string

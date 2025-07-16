@@ -17,8 +17,8 @@ export default async function dashboardPage() {
     return redirect("/sign-in");
   }
 
-  const playerName = "im okay";
-  const playerTag = "0643";
+  const playerName = "Stixxay";
+  const playerTag = "NA2";
 
   let playerId = null;
   try {
