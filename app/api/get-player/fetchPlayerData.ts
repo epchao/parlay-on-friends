@@ -52,8 +52,8 @@ export async function fetchPlayerData(riotId: string, tag: string) {
     }
 
     // Get ranked info
-    const accountID = summoner.response.id;
-    const rankedData = await lolApi.League.bySummoner(
+    const accountID = summoner.response.puuid;
+    const rankedData = await lolApi.League.byPUUID(
       accountID,
       Constants.Regions.AMERICA_NORTH
     );
