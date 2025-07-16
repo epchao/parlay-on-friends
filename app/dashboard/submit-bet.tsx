@@ -9,9 +9,10 @@ import { createClient } from "@/utils/supabase/client";
 
 interface SubmitBetProps {
   balance: number;
+  playerId: string | null;
 }
 
-export default function SubmitBet({ balance }: SubmitBetProps) {
+export default function SubmitBet({ balance, playerId }: SubmitBetProps) {
   const [betAmt, setAmt] = useState(0);
   const updateInput = (event: ChangeEvent<HTMLInputElement>) => {
     const val = Number(event.target.value);
@@ -22,6 +23,18 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
 
   // User presses submit button
   const submitHandler = async () => {
+    // Check if we have a player ID
+    if (!playerId) {
+      console.error("No player ID available");
+      return;
+    }
+
+    // Check if bet amount is valid
+    if (!betAmt || betAmt <= 0) {
+      console.error("Please enter a valid bet amount");
+      return;
+    }
+
     // Connect to db
     const supabase = createClient();
 
@@ -44,10 +57,9 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        // Filler data
         body: JSON.stringify({
           user_id: user.id,
-          player_id: 1,
+          player_id: playerId,
           selections: [
             {
               stat: "KILLS",
@@ -62,7 +74,7 @@ export default function SubmitBet({ balance }: SubmitBetProps) {
               type: "UNDER",
             },
           ],
-          amount: 100,
+          amount: betAmt,
         }),
       });
 
