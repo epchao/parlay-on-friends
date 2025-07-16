@@ -4,12 +4,11 @@ import { createClient } from "@/utils/supabase/client";
 import { DataContext } from "./dashboard-wrapper";
 import Toast from "./toast";
 
-// TODO
-// Pass down card bets down to this component
-// Update component visually to use dynamic data
-// Use actual data for request body
+export interface SubmitBetProps {
+  playerId: string;
+}
 
-export default function SubmitBet() {
+export default function SubmitBet({ playerId }: SubmitBetProps) {
   const { dataLoaded, userBets, setUserBets, setResetBet } =
     useContext(DataContext);
   const multipler = userBets.length > 0 ? userBets.length + 1 : 0;
@@ -64,11 +63,9 @@ export default function SubmitBet() {
         headers: {
           "Content-Type": "application/json",
         },
-        // Filler data
         body: JSON.stringify({
           user_id: user.id,
-          player_id:
-            "EhNCYvLHcwLK-5HCafdeWMxggYyremmtVBDNoancXaBYG1F-2vyEPHiIlKREzq2LfDHvckrwUUSeiA",
+          player_id: playerId,
           selections: userBets,
           amount: betAmt,
         }),

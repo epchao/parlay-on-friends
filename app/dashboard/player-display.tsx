@@ -21,7 +21,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { dataLoaded, setDataLoaded, setPlayerDetails } =
+  const { dataLoaded, setDataLoaded, playerDetails, setPlayerDetails } =
     useContext(DataContext);
 
   // Function to create JSX for teams
@@ -108,6 +108,35 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         const { gameOngoing } = await response.json();
 
         if (!gameOngoing) {
+          try {
+            const playerAverages = playerDetails[1];
+            
+            const thresholds = {
+              kills: playerAverages?.kills || 5,
+              deaths: playerAverages?.deaths || 3,
+              assists: playerAverages?.assists || 8,
+              cs: playerAverages?.cs || 150,
+            };
+
+            const processBetsResponse = await fetch('/api/bets/process', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                playerId: currentPlayer.puuid,
+                thresholds
+              })
+            });
+
+            if (processBetsResponse.ok) {
+              const result = await processBetsResponse.json();
+              console.log('Bet processing result:', result);
+            }
+          } catch (error) {
+            console.error('Error processing bets:', error);
+          }
+
           setCurrentPlayer(null);
           setPlayerDetails([]);
           setTime(0);
