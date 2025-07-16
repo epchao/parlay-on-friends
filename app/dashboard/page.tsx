@@ -34,7 +34,7 @@ export default async function dashboardPage() {
         </pre>
       </div>
 
-      <PlayerDisplay name="Jiwon" tag="Soap" />
+      <PlayerDisplay name="virus" tag="wtf" />
 
       <div className='grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2'>
         {MockBetData.map((e, i) => (
