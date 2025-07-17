@@ -32,12 +32,31 @@ export async function POST(request: Request) {
       return Response.json({ error: "Not enough funds" }, { status: 400 });
     }
 
+    // Get the current live game for this player
+    const { data: liveGame, error: liveGameError } = await supabase
+      .from('live_games')
+      .select('id')
+      .eq('player_id', player_id)
+      .eq('status', 'in_progress')
+      .single();
+
+    if (liveGameError || !liveGame) {
+      return Response.json({ error: "Player not currently in a live game" }, { status: 400 });
+    }
+
     const multiplier = selections.length + 1;
 
     // Insert
     const { error } = await supabase
       .from("bets")
-      .insert({ user_id, player_id, selections, amount, multiplier });
+      .insert({ 
+        user_id, 
+        player_id, 
+        selections, 
+        amount, 
+        multiplier, 
+        live_game_id: liveGame.id 
+      });
 
     // Check if error happened while inserting
     if (error) {
@@ -66,6 +85,7 @@ export async function POST(request: Request) {
       selections,
       amount,
       multiplier,
+      live_game_id: liveGame.id,
       newBalance,
     });
   } catch (error) {

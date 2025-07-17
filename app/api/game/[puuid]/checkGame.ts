@@ -1,6 +1,5 @@
-import { Constants, LolApi, RiotApi } from "twisted";
+import { Constants, LolApi } from "twisted";
 
-const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
 
 export const checkGame = async (puuid: string) => {

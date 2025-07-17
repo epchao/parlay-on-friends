@@ -1,21 +1,7 @@
 import { NextResponse } from "next/server";
-import { RiotApi, LolApi, Constants } from "twisted";
-import { fetchPlayerData } from "../get-player/fetchPlayerData";
-import { MatchHistoryStats } from "../get-player/matchHistoryStats";
-import { Player } from "@/interfaces/player";
-
-const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
-const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: Request) {
-  console.log("starting benchmark");
-  const start = Date.now();
-
-  const logTime = (label: string) => {
-    console.log(`${label}: ${Date.now() - start}ms`);
-  };
-
-  // Get search params
   const { searchParams } = new URL(request.url);
   const riotId = searchParams.get("riotId");
   const tag = searchParams.get("tag");
@@ -27,126 +13,94 @@ export async function GET(request: Request) {
     );
   }
 
-  try {
-    logTime("Start fetching account");
-    const account = await riotApi.Account.getByRiotId(
-      riotId as string,
-      tag as string,
-      Constants.RegionGroups.AMERICAS
-    );
-    logTime("Fetched account");
+  const supabase = await createClient();
 
-    if (!account.response.puuid) {
-      return NextResponse.json({ error: "Player not found" });
+  try {
+    // Get player from cache with weighted averages
+    const { data: player, error: playerError } = await supabase
+      .from('players')
+      .select('id, riot_id, tag, summoner_level, profile_icon_id, rank_data, weighted_avg_kills, weighted_avg_deaths, weighted_avg_assists, weighted_avg_cs')
+      .eq('riot_id', riotId)
+      .eq('tag', tag)
+      .single();
+
+    if (playerError || !player) {
+      return NextResponse.json({ error: 'Player not found in system. Please add them first.' }, { status: 404 });
     }
 
-    const currentPlayerPuuid = account.response.puuid;
+    // Use stored weighted averages (calculated during registration)
+    const averages = {
+      kills: player.weighted_avg_kills || 0,
+      deaths: player.weighted_avg_deaths || 0,
+      assists: player.weighted_avg_assists || 0,
+      cs: player.weighted_avg_cs || 0
+    };
 
-    try {
-      logTime("Start fetching active game");
-      const details = await lolApi.SpectatorV5.activeGame(
-        currentPlayerPuuid,
-        Constants.Regions.AMERICA_NORTH
-      );
-      logTime("Fetched active game");
+    // Check for active game and get stored game data
+    const { data: liveGame, error: liveGameError } = await supabase
+      .from('live_games')
+      .select('*')
+      .eq('player_id', player.id)
+      .eq('status', 'in_progress')
+      .single();
 
-      if (![420, 440].includes(details.response.gameQueueConfigId)) {
-        return NextResponse.json({
-          error: "Player not currently playing a ranked match",
-        });
-      }
+    if (liveGameError || !liveGame) {
+      return NextResponse.json({ error: 'Player not currently in game' }, { status: 404 });
+    }
 
-      const gameTime = details.response.gameStartTime;
-      let currentPlayer: Player = {} as Player;
-      let currentPlayerTeam = 0;
-      const blueTeam: Player[] = [];
-      const redTeam: Player[] = [];
-
-      logTime("Start fetching participants");
-      const participantPromises = details.response.participants.map(
-        async (participant: any) => {
-          const [name, tag] = participant.riotId.split("#");
-          const data = await fetchPlayerData(name, tag);
-          return { participant, data };
-        }
-      );
-
-      const resolvedParticipants = await Promise.all(participantPromises);
-      logTime("Fetched participants");
-
-      for (const { participant, data } of resolvedParticipants) {
-        if ("error" in data) {
-          return NextResponse.json(
-            { error: "Error finding all players" },
-            { status: 404 }
-          );
-        }
-
-        if (participant.puuid === currentPlayerPuuid) {
-          currentPlayer = data;
-          currentPlayerTeam = participant.teamId;
-        } else if (participant.teamId === 100) {
-          blueTeam.push(data);
-        } else {
-          redTeam.push(data);
-        }
-      }
-
-      const allyColor = currentPlayerTeam === 100 ? "blue" : "red";
-      const enemyColor = allyColor === "blue" ? "red" : "blue";
-      const allies = currentPlayerTeam === 100 ? blueTeam : redTeam;
-      const enemies = currentPlayerTeam === 100 ? redTeam : blueTeam;
-
-      logTime("Start fetching match history stats");
-      const stats = await MatchHistoryStats(riotId, tag);
-      logTime("Fetched match history stats");
-
-      if (!stats || !stats.otherPlayersAverages) {
-        return NextResponse.json({ error: "Failed grabbing averages" });
-      }
-
-      const kills = stats.currentPlayerAverage.kills;
-      const assists = stats.currentPlayerAverage.assists;
-      const deaths = stats.currentPlayerAverage.deaths;
-      const cs = stats.currentPlayerAverage.cs;
-      currentPlayer.avgKda = (kills + assists) / deaths;
-      currentPlayer.avgCs = cs;
-
-      const currentPlayerAverages = { kills, deaths, assists, cs };
-
-      for (const ally of allies) {
-        const allyStats = stats.otherPlayersAverages[ally.puuid];
-        ally.avgKda =
-          (allyStats.averageKills + allyStats.averageAssists) /
-          allyStats.averageDeaths;
-        ally.avgCs = allyStats.averageCs;
-      }
-
-      for (const enemy of enemies) {
-        const enemyStats = stats.otherPlayersAverages[enemy.puuid];
-        enemy.avgKda =
-          (enemyStats.averageKills + enemyStats.averageAssists) /
-          enemyStats.averageDeaths;
-        enemy.avgCs = enemyStats.averageCs;
-      }
-
-      logTime("Finished processing everything");
-      console.log("ending benchmark");
+    // If we have stored game_data, use it. Otherwise fallback to basic data
+    if (liveGame.game_data) {
+      const gameData = liveGame.game_data;
+      
+      return NextResponse.json({
+        currentPlayer: gameData.currentPlayer,
+        currentPlayerAverages: averages,
+        gameTime: liveGame.game_start_time,
+        allies: gameData.allies || [],
+        enemies: gameData.enemies || [],
+        allyColor: gameData.allyColor || 'blue',
+        inGame: true,
+        liveGameId: liveGame.id
+      });
+    } else {
+      // Fallback to basic data structure compatible with player-display
+      // Use actual player data from the database when available
+      const rankData = player.rank_data || [];
+      const soloRank = Array.isArray(rankData) ? rankData.find(r => r.queueType === 'RANKED_SOLO_5x5') : null;
+      const flexRank = Array.isArray(rankData) ? rankData.find(r => r.queueType === 'RANKED_FLEX_SR') : null;
 
       return NextResponse.json({
-        gameTime,
-        currentPlayer,
-        currentPlayerAverages,
-        allyColor,
-        allies,
-        enemyColor,
-        enemies,
+        currentPlayer: {
+          puuid: player.id,
+          name: player.riot_id,
+          tag: player.tag,
+          level: player.summoner_level || 30,
+          icon: player.profile_icon_id ? 
+            `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/${player.profile_icon_id}.png` :
+            'https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/29.png',
+          champion: '',
+          championImage: '',
+          soloDuoRank: soloRank ? `${soloRank.tier} ${soloRank.rank}` : 'Unranked',
+          flexRank: flexRank ? `${flexRank.tier} ${flexRank.rank}` : 'Unranked',
+          soloDuoRankImage: soloRank ? 
+            `https://opgg-static.akamaized.net/images/medals_new/${soloRank.tier.toLowerCase()}.png` : 
+            'https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png',
+          flexRankImage: flexRank ? 
+            `https://opgg-static.akamaized.net/images/medals_new/${flexRank.tier.toLowerCase()}.png` : 
+            'https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png'
+        },
+        currentPlayerAverages: averages,
+        gameTime: liveGame.game_start_time,
+        allies: [],
+        enemies: [],
+        allyColor: 'blue',
+        inGame: true,
+        liveGameId: liveGame.id
       });
-    } catch (error: any) {
-      console.error("Error fetching game data:", error);
-      return NextResponse.json({ error: "Player not in game" });
     }
+
   } catch (error) {
-    return NextResponse.json({ error: "Player not in game" });
+    console.error('Error fetching cached game info:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

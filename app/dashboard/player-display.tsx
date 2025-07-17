@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, useContext, useRef } from "react";
 import { calculateGameTime } from "../api/get-current-game-info/calculateGametime";
 import { DataContext } from "./dashboard-wrapper";
+import { createClient } from "@/utils/supabase/client";
 
 interface PlayerDisplayProps {
   name: string;
@@ -34,11 +35,12 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
     return updatedTeam.map((player: Player, index) => (
       <tr key={index}>
-        <td className="w-1/5 px-1 py-2">{player.name}</td>
-        <td className="w-1/5 px-1 py-2 ">{player.champion}</td>
-        <td className="w-1/5 px-1 py-2 ">{player.avgKda?.toFixed(2)}</td>
-        <td className="w-1/5 px-1 py-2 ">{player.avgCs?.toFixed(0)}</td>
-        <td className="w-1/5 px-1 py-2 ">{player.soloDuoRank}</td>
+        <td className="w-1/6 px-1 py-2">{player.name}</td>
+        <td className="w-1/6 px-1 py-2">{player.champion}</td>
+        <td className="w-1/6 px-1 py-2">{player.avgKills?.toFixed(1)}</td>
+        <td className="w-1/6 px-1 py-2">{player.avgDeaths?.toFixed(1)}</td>
+        <td className="w-1/6 px-1 py-2">{player.avgAssists?.toFixed(1)}</td>
+        <td className="w-1/6 px-1 py-2">{player.avgCs?.toFixed(0)}</td>
       </tr>
     ));
   };
@@ -50,29 +52,48 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
       if (initialFetchDone.current || dataLoaded) return;
 
       try {
-        const response = await fetch(
+        // First, try the cached API
+        let response = await fetch(
           `/api/get-current-game-info?riotId=${name}&tag=${tag}`
         );
+
+        // If player not found in cache, register them first
+        if (response.status === 404) {
+          console.log('Player not in cache, registering...');
+          
+          const registerResponse = await fetch('/api/players/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ riotId: name, tag: tag })
+          });
+
+          if (registerResponse.ok) {
+            // Try the cached API again after registration
+            response = await fetch(
+              `/api/get-current-game-info?riotId=${name}&tag=${tag}`
+            );
+          }
+        }
+
         if (!response.ok) {
-          setError("Problem fetching player. Please try again later.");
+          if (response.status === 404) {
+            const errorData = await response.json();
+            if (errorData.error === 'Player not currently in game') {
+              setError("This player is currently not in game.");
+            } else if (errorData.error === 'No recent game data available') {
+              setError("No recent game data available for this player.");
+            } else {
+              setError("Player not found in system.");
+            }
+          } else {
+            setError("Problem fetching player. Please try again later.");
+          }
           return;
         }
 
         const data = await response.json();
 
-        if (data.error === "Player not in game") {
-          setError("This player is currently not in game.");
-          return;
-        } else if (
-          data.error === "Player not currently playing a ranked match"
-        ) {
-          setError("This player is not playing a ranked match.");
-          return;
-        } else if (data.error === "Player not found") {
-          setError("This player does not exist");
-          return;
-        }
-
+        // Handle the response data
         setCurrentPlayer(data.currentPlayer);
         setPlayerDetails([data.currentPlayer, data.currentPlayerAverages]);
         setTime(data.gameTime);
@@ -91,69 +112,51 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
     };
     // Try to fetch game data from player
     fetchPlayer();
-    // Retry every 2 minutes
-    const retryInterval = setInterval(fetchPlayer, 120000);
-    return () => clearInterval(retryInterval);
+    // No need for retry interval since cron job handles game status updates
   }, [dataLoaded]);
 
-  // Wait until everything is loaded then check game is ongoing every 5 minutes
+  // Wait until everything is loaded then subscribe to live game status changes
   useEffect(() => {
     if (!dataLoaded || !currentPlayer) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/game/${currentPlayer.puuid}`);
-        if (!response.ok) throw new Error("Failed to check game status");
-
-        const { gameOngoing } = await response.json();
-
-        if (!gameOngoing) {
-          try {
-            const playerAverages = playerDetails[1];
+    // Subscribe to real-time changes in live_games table
+    const supabase = createClient();
+    
+    const subscription = supabase
+      .channel('live_games_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'live_games',
+          filter: `player_id=eq.${currentPlayer.puuid}`
+        },
+        (payload: any) => {
+          console.log('Live game status changed:', payload);
+          
+          // If the game status changed to completed, reset the UI
+          if (payload.new.status === 'completed') {
+            console.log('Game completed, resetting UI...');
             
-            const thresholds = {
-              kills: playerAverages?.kills || 5,
-              deaths: playerAverages?.deaths || 3,
-              assists: playerAverages?.assists || 8,
-              cs: playerAverages?.cs || 150,
-            };
-
-            const processBetsResponse = await fetch('/api/bets/process', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                playerId: currentPlayer.puuid,
-                thresholds
-              })
-            });
-
-            if (processBetsResponse.ok) {
-              const result = await processBetsResponse.json();
-              console.log('Bet processing result:', result);
-            }
-          } catch (error) {
-            console.error('Error processing bets:', error);
+            setCurrentPlayer(null);
+            setPlayerDetails([]);
+            setTime(0);
+            setAllyColor("");
+            setAllies([]);
+            setEnemies([]);
+            setDataLoaded(false);
+            setError(null);
+            initialFetchDone.current = false;
           }
-
-          setCurrentPlayer(null);
-          setPlayerDetails([]);
-          setTime(0);
-          setAllyColor("");
-          setAllies([]);
-          setEnemies([]);
-          setDataLoaded(false);
-          setError(null);
-          initialFetchDone.current = false;
         }
-      } catch (err) {
-        console.error("Error checking game status", err);
-      }
-    }, 360000);
+      )
+      .subscribe();
 
-    return () => clearInterval(interval);
-  }, [dataLoaded]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [dataLoaded, currentPlayer]);
 
   // Set interval to tick up every second
   useEffect(() => {
@@ -258,11 +261,12 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
               <table className="w-full">
                 <thead className="border-b border-blue-600">
                   <tr className="">
-                    <th className="w-1/5 p-1 ">Player</th>
-                    <th className="w-1/5 p-1 ">Champion</th>
-                    <th className="w-1/5 p-1 ">Avg KDA</th>
-                    <th className="w-1/5 p-1 ">Avg CS</th>
-                    <th className="w-1/5 p-1 ">Rank</th>
+                    <th className="w-1/6 p-1">Player</th>
+                    <th className="w-1/6 p-1">Champion</th>
+                    <th className="w-1/6 p-1">Avg Kills</th>
+                    <th className="w-1/6 p-1">Avg Deaths</th>
+                    <th className="w-1/6 p-1">Avg Assists</th>
+                    <th className="w-1/6 p-1">Avg CS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-600">
@@ -278,11 +282,12 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
               <table className="w-full">
                 <thead className="border-b border-red-600">
                   <tr>
-                    <th className="w-1/5 p-1">Player</th>
-                    <th className="w-1/5 p-1">Champion</th>
-                    <th className="w-1/5 p-1">Avg KDA</th>
-                    <th className="w-1/5 p-1">Avg CS</th>
-                    <th className="w-1/5 p-1">Rank</th>
+                    <th className="w-1/6 p-1">Player</th>
+                    <th className="w-1/6 p-1">Champion</th>
+                    <th className="w-1/6 p-1">Avg Kills</th>
+                    <th className="w-1/6 p-1">Avg Deaths</th>
+                    <th className="w-1/6 p-1">Avg Assists</th>
+                    <th className="w-1/6 p-1">Avg CS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-600">

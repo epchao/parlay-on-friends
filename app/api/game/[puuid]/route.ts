@@ -1,13 +1,28 @@
 import { NextResponse } from "next/server";
-import { checkGame } from "./checkGame";
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ puuid: string }> }
+  context: { params: Promise<{ puuid: string }> }
 ) {
-  const puuid = (await params).puuid;
+  const { puuid } = await context.params;
+  const supabase = await createClient();
 
-  const gameOngoing = await checkGame(puuid);
+  try {
+    const { data: liveGame } = await supabase
+      .from('live_games')
+      .select('status')
+      .eq('player_id', puuid)
+      .eq('status', 'in_progress')
+      .single();
 
-  return NextResponse.json({ gameOngoing });
+    return NextResponse.json({ 
+      gameOngoing: !!liveGame
+    });
+  } catch (error) {
+    console.error('Error checking game status:', error);
+    return NextResponse.json({ 
+      gameOngoing: false 
+    });
+  }
 }

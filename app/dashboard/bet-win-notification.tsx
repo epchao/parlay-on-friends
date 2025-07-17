@@ -91,7 +91,7 @@ export default function BetWinNotification() {
     <>
       {/* Show queue count */}
       {notificationQueue.length > 0 && (
-        <div className="fixed bottom-40 right-8 bg-blue-600 text-white px-3 py-1 rounded-full text-sm z-50">
+        <div className="fixed bottom-48 right-8 bg-blue-600 text-white px-3 py-1 rounded-full text-sm z-50">
           +{notificationQueue.length} more
         </div>
       )}
