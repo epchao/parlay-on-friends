@@ -36,11 +36,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "Failed to place bet" }, { status: 500 });
     }
 
-    // Validate Balance
-    if (amount > balanceData.account_balance) {
-      return Response.json({ error: "Not enough funds" }, { status: 400 });
-    }
-
     // Get the current live game for this player
     const { data: liveGame, error: liveGameError } = await supabase
       .from('live_games')
@@ -56,6 +51,32 @@ export async function POST(request: Request) {
     const game_id = live_game_id || liveGame.id;
     const multiplier = selections.length + 1;
     const potential_winnings = amount * multiplier;
+
+    // Check if this is an update (existing bet) or a new bet
+    const { data: existingBet, error: existingBetError } = await supabase
+      .from("bets")
+      .select("amount")
+      .eq("user_id", user_id)
+      .eq("player_id", player_id)
+      .eq("live_game_id", game_id)
+      .single();
+
+    const isUpdate = existingBet && !existingBetError;
+    const previousAmount = existingBet?.amount || 0;
+
+    // Validate Balance for new bets or amount increases
+    if (!isUpdate) {
+      // New bet - check full amount
+      if (amount > balanceData.account_balance) {
+        return Response.json({ error: "Not enough funds" }, { status: 400 });
+      }
+    } else if (amount > previousAmount) {
+      // Update with higher amount - check the difference
+      const amountDifference = amount - previousAmount;
+      if (amountDifference > balanceData.account_balance) {
+        return Response.json({ error: "Not enough funds for the increased bet amount" }, { status: 400 });
+      }
+    }
 
     // Use upsert to update existing bet or insert new one
     const { error } = await supabase
@@ -82,20 +103,45 @@ export async function POST(request: Request) {
       return Response.json({ error: "Failed to place bet" }, { status: 500 });
     }
 
-    const { data: updateData, error: updateError } = await supabase
-      .from("users")
-      .update({ account_balance: balanceData.account_balance - amount })
-      .eq("user_id", user_id)
-      .select()
-      .single();
-    if (updateError) {
-      console.log(updateError);
-      return Response.json(
-        { error: "Failed to update balance" },
-        { status: 500 }
-      );
+    // Only update balance if it's a new bet or the amount changed
+    let newBalance = balanceData.account_balance;
+    if (!isUpdate) {
+      // New bet - deduct full amount
+      const { data: updateData, error: updateError } = await supabase
+        .from("users")
+        .update({ account_balance: balanceData.account_balance - amount })
+        .eq("user_id", user_id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.log(updateError);
+        return Response.json(
+          { error: "Failed to update balance" },
+          { status: 500 }
+        );
+      }
+      newBalance = updateData?.account_balance;
+    } else if (amount !== previousAmount) {
+      // Update with different amount - adjust the difference
+      const amountDifference = amount - previousAmount;
+      const { data: updateData, error: updateError } = await supabase
+        .from("users")
+        .update({ account_balance: balanceData.account_balance - amountDifference })
+        .eq("user_id", user_id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.log(updateError);
+        return Response.json(
+          { error: "Failed to update balance" },
+          { status: 500 }
+        );
+      }
+      newBalance = updateData?.account_balance;
     }
-    const newBalance = updateData?.account_balance;
+    // If it's an update with the same amount, don't change balance
 
     return Response.json({
       user_id,
@@ -109,6 +155,7 @@ export async function POST(request: Request) {
       potential_winnings,
       live_game_id: game_id,
       newBalance,
+      isUpdate,
     });
   } catch (error) {
     console.log(error);

@@ -6,14 +6,19 @@ import { Bet } from "@/interfaces/bet";
 import { DataContext } from "./dashboard-wrapper";
 
 const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
-  const { dataLoaded, setUserBets, resetBet } = useContext(DataContext);
+  const { dataLoaded, setUserBets, userBets } = useContext(DataContext);
   const [selected, setSelected] = useState("");
 
+  // Update selected state based on userBets from context
   useEffect(() => {
-    if (resetBet) {
+    const betKey = type.toLowerCase() as 'kills' | 'deaths' | 'cs' | 'assists';
+    const currentSelection = userBets[betKey];
+    if (currentSelection && currentSelection !== 'NONE') {
+      setSelected(currentSelection);
+    } else {
       setSelected("");
     }
-  }, [resetBet]);
+  }, [userBets, type]);
 
   const handleBetSelection = (betType: "LESS" | "MORE") => {
     const betKey = type.toLowerCase() as 'kills' | 'deaths' | 'cs' | 'assists';

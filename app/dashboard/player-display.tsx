@@ -22,8 +22,10 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { dataLoaded, setDataLoaded, playerDetails, setPlayerDetails } =
+  const { dataLoaded, setDataLoaded, playerDetails, setPlayerDetails, loadExistingBets } =
     useContext(DataContext);
+
+  const supabase = createClient();
 
   // Function to create JSX for teams
   const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
@@ -106,6 +108,15 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         setDataLoaded(true);
         setError(null);
         initialFetchDone.current = true;
+
+        // Load existing bets for this user and player
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        
+        if (user && data.currentPlayer?.puuid) {
+          await loadExistingBets(user.id, data.currentPlayer.puuid);
+        }
       } catch (err) {
         console.error("Error fetching player data", err);
         setError("Error fetching player data");
