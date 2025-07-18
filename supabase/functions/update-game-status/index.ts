@@ -1,24 +1,30 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
-import { LolApi, Constants } from "twisted";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-export async function GET(request: Request) {
-  const startTime = new Date();
-  console.log(`🔄 CRON JOB STARTED at ${startTime.toISOString()}`);
-  
-  // Secure the endpoint
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.log('❌ CRON JOB: Unauthorized access attempt');
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
-  const supabase = await createClient();
-
   try {
-    // Get all players with active live games OR games waiting for match data
+    const startTime = new Date();
+    console.log(`🔄 SUPABASE CRON JOB STARTED at ${startTime.toISOString()}`);
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+    // Get Riot API key
+    const riotApiKey = Deno.env.get('RIOT_KEY_SECRET')!
+
+    // Get all active live games
     const { data: liveGames, error: liveGamesError } = await supabase
       .from('live_games')
       .select('*')
@@ -26,7 +32,10 @@ export async function GET(request: Request) {
 
     if (liveGamesError) {
       console.error('Error fetching live games:', liveGamesError);
-      return NextResponse.json({ error: 'Failed to fetch live games' }, { status: 500 });
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch live games' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     console.log(`Checking ${liveGames.length} live games...`);
@@ -41,124 +50,122 @@ export async function GET(request: Request) {
       if (liveGame.status === 'ended') {
         console.log(`Retrying match data for ended game ${liveGame.id}...`);
         try {
-          const matchResponse = await lolApi.MatchV5.get(
-            liveGame.id, // Use the full match ID directly
-            Constants.RegionGroups.AMERICAS
+          const matchResponse = await fetch(
+            `https://americas.api.riotgames.com/lol/match/v5/matches/${liveGame.id}?api_key=${riotApiKey}`
           );
 
-          const participant = matchResponse.response.info.participants.find(
-            p => p.puuid === liveGame.player_id
-          );
+          if (matchResponse.ok) {
+            const matchData = await matchResponse.json();
+            const participant = matchData.info.participants.find(
+              (p: any) => p.puuid === liveGame.player_id
+            );
 
-          if (participant) {
-            // Process the completed game (same logic as below)
-            await processCompletedGame(liveGame, participant, matchResponse, supabase);
-            completedGames++;
+            if (participant) {
+              await processCompletedGame(liveGame, participant, matchData, supabase);
+              completedGames++;
+            }
           }
         } catch (retryError: any) {
-          if (retryError.status === 404) {
-            console.log(`Match data still not available for ${liveGame.id}. Will retry again.`);
-          } else {
-            console.error(`Error retrying match data for ${liveGame.id}:`, retryError);
-          }
+          console.log(`Match data still not available for ${liveGame.id}. Will retry again.`);
         }
         continue;
       }
       
       // For in_progress games, check if still active
       try {
-        // Check if the game is still active
-        await lolApi.SpectatorV5.activeGame(
-          liveGame.player_id,
-          Constants.Regions.AMERICA_NORTH
+        const activeGameResponse = await fetch(
+          `https://na1.api.riotgames.com/lol/spectator/v5/active-games/by-puuid/${liveGame.player_id}?api_key=${riotApiKey}`
         );
 
-        // If we get here, the game is still active
-        console.log(`Game ${liveGame.id} is still active`);
-
-      } catch (error: any) {
-        // If 404, the game has ended
-        if (error.status === 404) {
+        if (activeGameResponse.ok) {
+          // Game is still active
+          console.log(`Game ${liveGame.id} is still active`);
+        } else if (activeGameResponse.status === 404) {
+          // Game has ended
           completedGames++;
           console.log(`Game ${liveGame.id} has ended. Processing...`);
 
           // Fetch the match result
           try {
-            const matchResponse = await lolApi.MatchV5.get(
-              liveGame.id,
-              Constants.RegionGroups.AMERICAS
+            const matchResponse = await fetch(
+              `https://americas.api.riotgames.com/lol/match/v5/matches/${liveGame.id}?api_key=${riotApiKey}`
             );
 
-            const participant = matchResponse.response.info.participants.find(
-              p => p.puuid === liveGame.player_id
-            );
+            if (matchResponse.ok) {
+              const matchData = await matchResponse.json();
+              const participant = matchData.info.participants.find(
+                (p: any) => p.puuid === liveGame.player_id
+              );
 
-            if (participant) {
-              // Update the live game with final stats and process bets
-              const { error: updateError } = await supabase
-                .from('live_games')
-                .update({
-                  status: 'completed',
-                  game_end_time: matchResponse.response.info.gameEndTimestamp,
-                  final_kills: participant.kills,
-                  final_deaths: participant.deaths,
-                  final_assists: participant.assists,
-                  final_cs: participant.totalMinionsKilled + participant.neutralMinionsKilled
-                })
-                .eq('id', liveGame.id);
+              if (participant) {
+                // Update the live game with final stats
+                const { error: updateError } = await supabase
+                  .from('live_games')
+                  .update({
+                    status: 'completed',
+                    game_end_time: matchData.info.gameEndTimestamp,
+                    final_kills: participant.kills,
+                    final_deaths: participant.deaths,
+                    final_assists: participant.assists,
+                    final_cs: participant.totalMinionsKilled + participant.neutralMinionsKilled
+                  })
+                  .eq('id', liveGame.id);
 
-              if (updateError) {
-                console.error('Error updating live game:', updateError);
-                continue;
+                if (updateError) {
+                  console.error('Error updating live game:', updateError);
+                  continue;
+                }
+
+                // Process bets for this game
+                await processCompletedGame(liveGame, participant, matchData, supabase);
+                console.log(`Successfully processed game ${liveGame.id}`);
               }
-
-              // Process bets for this game
-              await processCompletedGame(liveGame, participant, matchResponse, supabase);
-
-              console.log(`Successfully processed game ${liveGame.id}`);
-            }
-          } catch (matchError: any) {
-            // If match data not available yet (common after game ends), mark for retry
-            if (matchError.status === 404) {
+            } else {
+              // Match data not available yet
               console.log(`Match data not yet available for ${liveGame.id}. Will retry on next cron run.`);
               
-              // Update the live game status to "ended" but not "completed" so we retry later
               await supabase
                 .from('live_games')
                 .update({
-                  status: 'ended', // New intermediate status
+                  status: 'ended',
                   game_end_time: new Date().toISOString()
                 })
                 .eq('id', liveGame.id);
-            } else {
-              console.error(`Error fetching match data for ${liveGame.id}:`, matchError);
             }
+          } catch (matchError: any) {
+            console.error(`Error fetching match data for ${liveGame.id}:`, matchError);
           }
-        } else {
-          console.error(`Error checking game ${liveGame.id}:`, error);
         }
+      } catch (error: any) {
+        console.error(`Error checking game ${liveGame.id}:`, error);
       }
     }
 
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
     
-    console.log(`✅ CRON JOB COMPLETED at ${endTime.toISOString()}`);
+    console.log(`✅ SUPABASE CRON JOB COMPLETED at ${endTime.toISOString()}`);
     console.log(`📊 SUMMARY: ${processedGames} games checked, ${completedGames} completed, ${duration}ms duration`);
 
-    return NextResponse.json({ 
-      message: `Processed ${liveGames.length} games`,
-      processedGames,
-      completedGames,
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString()
-    });
+    return new Response(
+      JSON.stringify({ 
+        message: `Processed ${liveGames.length} games`,
+        processedGames,
+        completedGames,
+        duration: `${duration}ms`,
+        timestamp: new Date().toISOString()
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
   } catch (error) {
-    console.error('❌ CRON JOB ERROR:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('❌ SUPABASE CRON JOB ERROR:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-}
+})
 
 function getStatValue(participant: any, statType: string): number {
   switch (statType) {
@@ -259,7 +266,7 @@ async function processCompletedGame(liveGame: any, participant: any, matchRespon
 
         // Count total selections properly
         const totalSelections = Array.isArray(selections) 
-          ? selections.reduce((count, sel) => count + Object.keys(sel).length, 0)
+          ? selections.reduce((count: number, sel: any) => count + Object.keys(sel).length, 0)
           : Object.keys(selections).length;
 
         const { error: notificationError } = await supabase
