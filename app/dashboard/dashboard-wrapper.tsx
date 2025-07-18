@@ -18,6 +18,8 @@ type DataContextProps = {
   userBets: UserBets;
   setUserBets: React.Dispatch<React.SetStateAction<UserBets>>;
   originalBets: UserBets;
+  gameTime: number;
+  setGameTime: React.Dispatch<React.SetStateAction<number>>;
   loadExistingBets: (userId: string, playerId: string) => Promise<void>;
   clearBet: (userId: string, playerId: string) => Promise<void>;
 };
@@ -32,6 +34,8 @@ export const DataContext = createContext<DataContextProps>({
   userBets: { kills: 'NONE', deaths: 'NONE', cs: 'NONE', assists: 'NONE' },
   setUserBets: () => {},
   originalBets: { kills: 'NONE', deaths: 'NONE', cs: 'NONE', assists: 'NONE' },
+  gameTime: 0,
+  setGameTime: () => {},
   loadExistingBets: async () => {},
   clearBet: async () => {},
 });
@@ -39,6 +43,7 @@ export const DataContext = createContext<DataContextProps>({
 export const DashboardWrapper = ({ children }: Props) => {
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [playerDetails, setPlayerDetails] = useState<Record<string, any>[]>([]);
+  const [gameTime, setGameTime] = useState<number>(0);
   const [userBets, setUserBets] = useState<UserBets>({ 
     kills: 'NONE', 
     deaths: 'NONE', 
@@ -122,6 +127,8 @@ export const DashboardWrapper = ({ children }: Props) => {
         userBets,
         setUserBets,
         originalBets,
+        gameTime,
+        setGameTime,
         loadExistingBets,
         clearBet,
       }}

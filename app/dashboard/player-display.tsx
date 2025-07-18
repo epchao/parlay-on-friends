@@ -18,11 +18,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   const [allies, setAllies] = useState<Player[]>([]);
   const [allyColor, setAllyColor] = useState("");
   const [enemies, setEnemies] = useState<Player[]>([]);
-  const [time, setTime] = useState(0);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { dataLoaded, setDataLoaded, playerDetails, setPlayerDetails, loadExistingBets } =
+  const { dataLoaded, setDataLoaded, playerDetails, setPlayerDetails, loadExistingBets, gameTime, setGameTime } =
     useContext(DataContext);
 
   const supabase = createClient();
@@ -101,7 +99,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         // Handle the response data
         setCurrentPlayer(data.currentPlayer);
         setPlayerDetails([data.currentPlayer, data.currentPlayerAverages]);
-        setTime(data.gameTime);
+        setGameTime(data.gameTime);
         setAllyColor(data.allyColor);
         setAllies(data.allies);
         setEnemies(data.enemies);
@@ -155,7 +153,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             
             setCurrentPlayer(null);
             setPlayerDetails([]);
-            setTime(0);
+            setGameTime(0);
             setAllyColor("");
             setAllies([]);
             setEnemies([]);
@@ -175,7 +173,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   // Set interval to tick up every second
   useEffect(() => {
     const timerInterval = setInterval(() => {
-      setTime((prevTime) => prevTime + 1);
+      setGameTime((prevTime: number) => prevTime + 1);
     }, 1000);
 
     // Clear interval when component unmounts
@@ -264,10 +262,20 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             />
           </div>
           {/* Game data */}
-          <div className="">
+          <div>
+            {/* Betting Window Status */}
+            <div className={`py-2 px-3 font-bold text-center ${gameTime < 300 ? 'bg-green-600' : 'bg-red-600'}`}>
+              {gameTime < 300 ? (
+                <span>
+                  Betting Open: {calculateGameTime(300 - gameTime)} remaining
+                </span>
+              ) : (
+                <span>Betting Closed</span>
+              )}
+            </div>
             {/* Time */}
             <p className="bg-gray-600 py-2 font-bold">
-              Game Time: {calculateGameTime(time)}
+              Game Time: {calculateGameTime(gameTime)}
             </p>
             {/* Blue Team Table */}
             <div>

@@ -6,7 +6,7 @@ import { Bet } from "@/interfaces/bet";
 import { DataContext } from "./dashboard-wrapper";
 
 const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
-  const { dataLoaded, setUserBets, userBets } = useContext(DataContext);
+  const { dataLoaded, setUserBets, userBets, gameTime } = useContext(DataContext);
   const [selected, setSelected] = useState("");
 
   // Update selected state based on userBets from context
@@ -21,6 +21,9 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
   }, [userBets, type]);
 
   const handleBetSelection = (betType: "LESS" | "MORE") => {
+    // Don't allow selection if betting window has closed
+    if (gameTime >= 300) return; // 300 seconds = 5 minutes
+    
     const betKey = type.toLowerCase() as 'kills' | 'deaths' | 'cs' | 'assists';
     if (selected === "") {
       setSelected(betType);
@@ -75,20 +78,30 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
         {/* Buttons */}
         <div className="absolute bottom-0 left-0 w-full h-12 flex">
           <button
-            className={`flex-1 bg-gray-900 text-white ${selected === "LESS" ? "bg-red-700" : ""} 
-            tracking-tighter font-bold hover: transition-colors duration-500 ease-in-out`}
+            className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
+              gameTime >= 300 
+                ? "bg-gray-600 cursor-not-allowed" 
+                : `bg-gray-900 ${selected === "LESS" ? "bg-red-700" : ""} hover:bg-red-600`
+            }`}
             onClick={() => {
               handleBetSelection("LESS");
             }}
+            disabled={gameTime >= 300}
+            title={gameTime >= 300 ? "Betting closed after 5 minutes" : ""}
           >
             Less
           </button>
           <button
-            className={`flex-1 bg-gray-900 text-white ${selected === "MORE" ? "bg-green-700" : ""}
-                    tracking-tighter font-bold hover: transition-colors duration-500 ease-in-out`}
+            className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
+              gameTime >= 300 
+                ? "bg-gray-600 cursor-not-allowed" 
+                : `bg-gray-900 ${selected === "MORE" ? "bg-green-700" : ""} hover:bg-green-600`
+            }`}
             onClick={() => {
               handleBetSelection("MORE");
             }}
+            disabled={gameTime >= 300}
+            title={gameTime >= 300 ? "Betting closed after 5 minutes" : ""}
           >
             More
           </button>

@@ -16,13 +16,26 @@ export async function DELETE(request: Request) {
     // Get the current live game for this player
     const { data: liveGame, error: liveGameError } = await supabase
       .from('live_games')
-      .select('id')
+      .select('id, game_start_time')
       .eq('player_id', player_id)
       .eq('status', 'in_progress')
       .single();
 
     if (liveGameError || !liveGame) {
       return Response.json({ error: "Player not currently in a live game" }, { status: 400 });
+    }
+
+    // Check if more than 5 minutes have passed since game start
+    const gameStartTime = new Date(liveGame.game_start_time);
+    const currentTime = new Date();
+    const gameTimeElapsedMs = currentTime.getTime() - gameStartTime.getTime();
+    const fiveMinutesInMs = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    if (gameTimeElapsedMs > fiveMinutesInMs) {
+      const minutesElapsed = Math.floor(gameTimeElapsedMs / (60 * 1000));
+      return Response.json({ 
+        error: `Betting is closed. Game has been in progress for ${minutesElapsed} minutes (betting closes after 5 minutes)` 
+      }, { status: 400 });
     }
 
     // Delete the bet

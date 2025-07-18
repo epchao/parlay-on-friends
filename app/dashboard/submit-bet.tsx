@@ -5,7 +5,7 @@ import { DataContext } from "./dashboard-wrapper";
 import Toast from "../../components/toast";
 
 export default function SubmitBet() {
-  const { dataLoaded, userBets, setUserBets, playerDetails, loadExistingBets, clearBet, originalBets } =
+  const { dataLoaded, userBets, setUserBets, playerDetails, loadExistingBets, clearBet, originalBets, gameTime } =
     useContext(DataContext);
   
   // Get playerId from context (playerDetails[0] is the current player)
@@ -50,6 +50,11 @@ export default function SubmitBet() {
     const amountChanged = betAmt !== originalBets.amount;
     
     return selectionsChanged || amountChanged;
+  };
+
+  // Check if betting is still allowed (within 5 minutes)
+  const isBettingAllowed = () => {
+    return gameTime < 300; // 300 seconds = 5 minutes
   };
   const updateInput = (event: ChangeEvent<HTMLInputElement>) => {
     const val = Number(event.target.value);
@@ -172,19 +177,21 @@ export default function SubmitBet() {
             <div className="flex gap-2">
               <button
                 className={`font-semibold px-6 py-2 rounded-lg transition-colors flex-1 ${
-                  hasChanges() && multipler > 0
+                  hasChanges() && multipler > 0 && isBettingAllowed()
                     ? "bg-gray-900 hover:bg-green-700 active:bg-green-800 text-white"
                     : "bg-gray-500 text-gray-300 cursor-not-allowed"
                 }`}
                 onClick={submitHandler}
-                disabled={!hasChanges() || multipler === 0}
+                disabled={!hasChanges() || multipler === 0 || !isBettingAllowed()}
+                title={!isBettingAllowed() ? "Betting closed after 5 minutes of game time" : ""}
               >
-                {userBets.amount ? "Update Entry" : "Place Entry"}
+                {!isBettingAllowed() ? "Betting Closed" : userBets.amount ? "Update Entry" : "Place Entry"}
               </button>
-              {userBets.amount && (
+              {userBets.amount && isBettingAllowed() && (
                 <button
                   className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
                   onClick={clearHandler}
+                  title={!isBettingAllowed() ? "Betting closed after 5 minutes of game time" : ""}
                 >
                   Clear Bet
                 </button>
