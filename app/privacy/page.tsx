@@ -110,6 +110,493 @@ export default function PrivacyPage() {
           <ul>
             <li data-custom-class="body_text" style={{ lineHeight: 1.5 }}>
               <span style={{ fontSize: '15px' }}>
+                Use <strong>Parlay on Friends</strong>. Parlay on Friends aims to create a betting platform that allows friends to bet on the performance of a group of League of Legends players in upcoming games. It will use Next.js with TypeScript for both frontend and backend (via API routes) and integrate with the Twisted API for League of Legends match history and live game data. Supabase PostgreSQL will be used for database storage, and the platform will be deployed on Vercel. We have an application link which is our demo and this project just serves as an education project for a group of students to teach them about full-stack web development and software engineering principles.
+              </span>
+            </li>
+          </ul>
+          
+          <ul>
+            <li data-custom-class="body_text" style={{ lineHeight: 1.5 }}>
+              <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+                <span data-custom-class="body_text">
+                  Engage with us in other related ways, including any sales, marketing, or events
+                </span>
+              </span>
+            </li>
+          </ul>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span style={{ color: 'rgb(127, 127, 127)' }}>
+                <span data-custom-class="body_text">
+                  <strong>Questions or concerns? </strong>Reading this Privacy Notice will help you understand your privacy rights and choices. We are responsible for making decisions about how your personal information is processed. If you do not agree with our policies and practices, please do not use our Services. If you still have any questions or concerns, please contact us at <strong>epchao@berkeley.edu</strong>.
+                </span>
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <strong><span style={{ fontSize: '15px' }}><span data-custom-class="heading_1"><h2>SUMMARY OF KEY POINTS</h2></span></span></strong>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong><em>This summary provides key points from our Privacy Notice, but you can find out more details about any of these topics by clicking the link following each key point or by using our </em></strong>
+              </span>
+            </span>
+            <a data-custom-class="link" href="#toc">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text"><strong><em>table of contents</em></strong></span>
+              </span>
+            </a>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong><em> below to find the section you are looking for.</em></strong>
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>What personal information do we process?</strong> When you visit, use, or navigate our Services, we may process personal information depending on how you interact with us and the Services, the choices you make, and the products and features you use. Learn more about 
+              </span>
+            </span>
+            <a data-custom-class="link" href="#personalinfo">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">personal information you disclose to us</span>
+              </span>
+            </a>
+            <span data-custom-class="body_text">.</span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>Do we process any sensitive personal information? </strong>Some of the information may be considered "special" or "sensitive" in certain jurisdictions, for example your racial or ethnic origins, sexual orientation, and religious beliefs. We do not process sensitive personal information.
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>Do we collect any information from third parties?</strong> We do not collect any information from third parties.
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>How do we process your information?</strong> We process your information to provide, improve, and administer our Services, communicate with you, for security and fraud prevention, and to comply with law. We may also process your information for other purposes with your consent. We process your information only when we have a valid legal reason to do so. Learn more about 
+              </span>
+            </span>
+            <a data-custom-class="link" href="#infouse">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">how we process your information</span>
+              </span>
+            </a>
+            <span data-custom-class="body_text">.</span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>In what situations and with which parties do we share personal information?</strong> We may share information in specific situations and with specific third parties. Learn more about 
+              </span>
+            </span>
+            <a data-custom-class="link" href="#whoshare">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">when and with whom we share your personal information</span>
+              </span>
+            </a>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">.</span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>How do we keep your information safe?</strong> We have adequate organizational and technical processes and procedures in place to protect your personal information. However, no electronic transmission over the internet or information storage technology can be guaranteed to be 100% secure, so we cannot promise or guarantee that hackers, cybercriminals, or other unauthorized third parties will not be able to defeat our security and improperly collect, access, steal, or modify your information. Learn more about 
+              </span>
+            </span>
+            <a data-custom-class="link" href="#infosafe">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">how we keep your information safe</span>
+              </span>
+            </a>
+            <span data-custom-class="body_text">.</span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>What are your rights?</strong> Depending on where you are located geographically, the applicable privacy law may mean you have certain rights regarding your personal information. Learn more about 
+              </span>
+            </span>
+            <a data-custom-class="link" href="#privacyrights">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">your privacy rights</span>
+              </span>
+            </a>
+            <span data-custom-class="body_text">.</span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>How do you exercise your rights?</strong> The easiest way to exercise your rights is by submitting a 
+              </span>
+            </span>
+            <a data-custom-class="link" href="https://app.termly.io/notify/94033b6d-6a1f-42b2-8a3d-eab1713817de" rel="noopener noreferrer" target="_blank">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">data subject access request</span>
+              </span>
+            </a>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">, or by contacting us. We will consider and act upon any request in accordance with applicable data protection laws.</span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">Want to learn more about what we do with any information we collect? </span>
+            </span>
+            <a data-custom-class="link" href="#toc">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">Review the Privacy Notice in full</span>
+              </span>
+            </a>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">.</span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div id="toc" style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span style={{ color: 'rgb(127, 127, 127)' }}>
+                <span style={{ color: 'rgb(0, 0, 0)' }}>
+                  <strong><span data-custom-class="heading_1"><h2>TABLE OF CONTENTS</h2></span></strong>
+                </span>
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#infocollect">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>1. WHAT INFORMATION DO WE COLLECT?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#infouse">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>2. HOW DO WE PROCESS YOUR INFORMATION?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#legalbases">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>3. WHAT LEGAL BASES DO WE RELY ON TO PROCESS YOUR PERSONAL INFORMATION?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span style={{ color: 'rgb(0, 58, 250)' }}>
+                <a data-custom-class="link" href="#whoshare">4. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</a>
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#sociallogins">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>5. HOW DO WE HANDLE YOUR SOCIAL LOGINS?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#inforetain">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>6. HOW LONG DO WE KEEP YOUR INFORMATION?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#infosafe">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>7. HOW DO WE KEEP YOUR INFORMATION SAFE?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span style={{ color: 'rgb(0, 58, 250)' }}>
+                <a data-custom-class="link" href="#privacyrights">8. WHAT ARE YOUR PRIVACY RIGHTS?</a>
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#DNT">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>9. CONTROLS FOR DO-NOT-TRACK FEATURES</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#uslaws">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>10. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <a data-custom-class="link" href="#policyupdates">
+                <span style={{ color: 'rgb(0, 58, 250)' }}>11. DO WE MAKE UPDATES TO THIS NOTICE?</span>
+              </a>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <a data-custom-class="link" href="#contact">
+              <span style={{ color: 'rgb(0, 58, 250)', fontSize: '15px' }}>12. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span>
+            </a>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <a data-custom-class="link" href="#request">
+              <span style={{ color: 'rgb(0, 58, 250)' }}>13. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</span>
+            </a>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+
+          {/* Continue with all sections - I'll add the key sections */}
+          
+          <div id="infocollect" style={{ lineHeight: 1.5 }}>
+            <span style={{ color: 'rgb(0, 0, 0)', fontSize: '15px' }}>
+              <span id="control" style={{ color: 'rgb(0, 0, 0)' }}>
+                <strong><span data-custom-class="heading_1"><h2>1. WHAT INFORMATION DO WE COLLECT?</h2></span></strong>
+              </span>
+            </span>
+            
+            <span data-custom-class="heading_2" id="personalinfo" style={{ color: 'rgb(0, 0, 0)' }}>
+              <span style={{ fontSize: '15px' }}>
+                <strong><h3>Personal information you disclose to us</h3></strong>
+              </span>
+            </span>
+            
+            <span style={{ color: 'rgb(127, 127, 127)' }}>
+              <span style={{ color: 'rgb(89, 89, 89)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">
+                  <strong><em>In Short:</em></strong><em> We collect personal information that you provide to us.</em>
+                </span>
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+              <span data-custom-class="body_text">
+                We collect personal information that you voluntarily provide to us when you register on the Services, express an interest in obtaining information about us or our products and Services, when you participate in activities on the Services, or otherwise when you contact us.
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+              <span data-custom-class="body_text">
+                <strong>Personal Information Provided by You.</strong> The personal information that we collect depends on the context of your interactions with us and the Services, the choices you make, and the products and features you use. The personal information we collect may include the following:
+              </span>
+            </span>
+          </div>
+          
+          <ul>
+            <li data-custom-class="body_text" style={{ lineHeight: 1.5 }}>
+              <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+                <span data-custom-class="body_text">email addresses</span>
+              </span>
+            </li>
+          </ul>
+          
+          <ul>
+            <li data-custom-class="body_text" style={{ lineHeight: 1.5 }}>
+              <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+                <span data-custom-class="body_text">usernames</span>
+              </span>
+            </li>
+          </ul>
+          
+          <div id="sensitiveinfo" style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">
+                <strong>Sensitive Information.</strong> We do not process sensitive information.
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+              <span data-custom-class="body_text">
+                <strong>Social Media Login Data.</strong> We may provide you with the option to register with us using your existing social media account details, like your Facebook, X, or other social media account. If you choose to register in this way, we will collect certain profile information about you from the social media provider, as described in the section called "
+                <span style={{ fontSize: '15px' }}>
+                  <span data-custom-class="body_text">
+                    <span style={{ color: 'rgb(0, 58, 250)' }}>
+                      <a data-custom-class="link" href="#sociallogins">HOW DO WE HANDLE YOUR SOCIAL LOGINS?</a>
+                    </span>
+                  </span>
+                </span>" below.
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+              <span data-custom-class="body_text">
+                All personal information that you provide to us must be true, complete, and accurate, and you must notify us of any changes to such personal information.
+              </span>
+            </span>
+          </div>
+
+          {/* Contact Section */}
+          <div id="contact" style={{ lineHeight: 1.5, marginTop: '2rem' }}>
+            <span style={{ color: 'rgb(127, 127, 127)' }}>
+              <span style={{ color: 'rgb(89, 89, 89)', fontSize: '15px' }}>
+                <span id="control" style={{ color: 'rgb(0, 0, 0)' }}>
+                  <strong><span data-custom-class="heading_1"><h2>12. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</h2></span></strong>
+                </span>
+              </span>
+            </span>
+            
+            <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+              <span data-custom-class="body_text">
+                If you have questions or comments about this notice, you may email us at <strong>epchao@berkeley.edu</strong> or contact us by post at:
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+              <span data-custom-class="body_text">
+                <strong>Parlay on Friends</strong>
+              </span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">__________</span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ fontSize: '15px' }}>
+              <span data-custom-class="body_text">__________</span>
+            </span>
+          </div>
+          
+          <div style={{ lineHeight: 1.5 }}><br /></div>
+          
+          <div id="request" style={{ lineHeight: 1.5 }}>
+            <span style={{ color: 'rgb(127, 127, 127)' }}>
+              <span style={{ color: 'rgb(89, 89, 89)', fontSize: '15px' }}>
+                <span id="control" style={{ color: 'rgb(0, 0, 0)' }}>
+                  <strong><span data-custom-class="heading_1"><h2>13. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</h2></span></strong>
+                </span>
+              </span>
+            </span>
+            
+            <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+              <span data-custom-class="body_text">
+                Based on the applicable laws of your country or state of residence in the US, you may have the right to request access to the personal information we collect from you, details about how we have processed it, correct inaccuracies, or delete your personal information. You may also have the right to withdraw your consent to our processing of your personal information. These rights may be limited in some circumstances by applicable law. To request to review, update, or delete your personal information, please fill out and submit a 
+                <span style={{ color: 'rgb(0, 58, 250)' }}>
+                  <span data-custom-class="body_text">
+                    <a data-custom-class="link" href="https://app.termly.io/notify/94033b6d-6a1f-42b2-8a3d-eab1713817de" rel="noopener noreferrer" target="_blank">data subject access request</a>
+                  </span>
+                </span>.
+              </span>
+            </span>
+          </div>
+        </div>
+          
+          <div style={{ lineHeight: 1.5 }}>
+            <span style={{ color: 'rgb(127, 127, 127)' }}>
+              <span style={{ color: 'rgb(89, 89, 89)', fontSize: '15px' }}>
+                <span data-custom-class="body_text">
+                  This Privacy Notice for <strong>Parlay on Friends</strong> ("<strong>we</strong>," "<strong>us</strong>," or "<strong>our</strong>"), describes how and why we might access, collect, store, use, and/or share ("<strong>process</strong>") your personal information when you use our services ("<strong>Services</strong>"), including when you:
+                </span>
+              </span>
+            </span>
+          </div>
+          
+          <ul>
+            <li data-custom-class="body_text" style={{ lineHeight: 1.5 }}>
+              <span style={{ fontSize: '15px', color: 'rgb(89, 89, 89)' }}>
+                <span data-custom-class="body_text">
+                  Visit our website at <span style={{ color: 'rgb(0, 58, 250)' }}>
+                    <a href="https://parlay-on-friends.vercel.app" target="_blank" data-custom-class="link">
+                      https://parlay-on-friends.vercel.app
+                    </a>
+                  </span> or any website of ours that links to this Privacy Notice
+                </span>
+              </span>
+            </li>
+          </ul>
+          
+          <ul>
+            <li data-custom-class="body_text" style={{ lineHeight: 1.5 }}>
+              <span style={{ fontSize: '15px' }}>
                 Use <strong>Parlay on Friends</strong>. Parlay on Friends aims to create a betting platform that allows friends to bet on the performance of League of Legends players in their current games. It will use Next.js with TypeScript for both frontend and backend (via API routes) and integrate with the Twisted API for League of Legends match history and live game data. Supabase PostgreSQL will be used for database storage, and the platform will be deployed on Vercel. We have an application link which is our demo and this project just serves as an education project for a group of students to teach them about full-stack web development and software engineering principles.
               </span>
             </li>
@@ -575,7 +1062,7 @@ export default function PrivacyPage() {
                 Based on the applicable laws of your country or state of residence in the US, you may have the right to request access to the personal information we collect from you, details about how we have processed it, correct inaccuracies, or delete your personal information. You may also have the right to withdraw your consent to our processing of your personal information. These rights may be limited in some circumstances by applicable law. To request to review, update, or delete your personal information, please fill out and submit a 
                 <span style={{ color: 'rgb(0, 58, 250)' }}>
                   <span data-custom-class="body_text">
-                    <a data-custom-class="link" href="https://app.termly.io/notify/308ea1dd-adef-4b45-a03a-744a2c8fd082" rel="noopener noreferrer" target="_blank">data subject access request</a>
+                    <a data-custom-class="link" href="https://app.termly.io/notify/94033b6d-6a1f-42b2-8a3d-eab1713817de" rel="noopener noreferrer" target="_blank">data subject access request</a>
                   </span>
                 </span>.
               </span>
