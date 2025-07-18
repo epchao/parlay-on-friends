@@ -24,8 +24,26 @@ serve(async (req) => {
 
     // Get Riot API key
     const riotApiKey = Deno.env.get('RIOT_KEY_SECRET')!
+    console.log(`Using Riot API key: ${riotApiKey ? 'PRESENT' : 'MISSING'} (length: ${riotApiKey?.length || 0})`);
 
-    // Get all active live games
+    // Test API key validity first
+    try {
+      const testResponse = await fetch(
+        `https://na1.api.riotgames.com/lol/status/v4/platform-data?api_key=${riotApiKey}`
+      );
+      console.log(`API key test response: ${testResponse.status}`);
+      if (!testResponse.ok) {
+        console.error(`API key test failed: ${testResponse.status} ${testResponse.statusText}`);
+        return new Response(
+          JSON.stringify({ error: `Riot API authentication failed: ${testResponse.status}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    } catch (testError) {
+      console.error('API key test error:', testError);
+    }
+
+    // Get all players with active live games OR games waiting for match data
     const { data: liveGames, error: liveGamesError } = await supabase
       .from('live_games')
       .select('*')
@@ -62,6 +80,7 @@ serve(async (req) => {
             );
 
             if (participant) {
+              // Process the completed game (same logic as below)
               await processCompletedGame(liveGame, participant, matchData, supabase);
               completedGames++;
             }
@@ -74,17 +93,34 @@ serve(async (req) => {
       
       // For in_progress games, check if still active
       try {
+        // Check if the game is still active on NA1
+        console.log(`Checking if game ${liveGame.id} is still active...`);
+        
         const activeGameResponse = await fetch(
           `https://na1.api.riotgames.com/lol/spectator/v5/active-games/by-puuid/${liveGame.player_id}?api_key=${riotApiKey}`
         );
 
+        console.log(`Active game API response status: ${activeGameResponse.status}`);
+        
         if (activeGameResponse.ok) {
-          // Game is still active
+          // If we get here, the game is still active
           console.log(`Game ${liveGame.id} is still active`);
         } else if (activeGameResponse.status === 404) {
-          // Game has ended
-          completedGames++;
+          // If 404, the game has ended
           console.log(`Game ${liveGame.id} has ended. Processing...`);
+        } else if (activeGameResponse.status === 403) {
+          // 403 usually means the game has ended and we can't check spectator data anymore
+          console.log(`Game ${liveGame.id} spectator data unavailable (403) - assuming game has ended`);
+          // Treat as if the game ended
+        } else {
+          console.error(`Unexpected API response for game ${liveGame.id}: ${activeGameResponse.status}`);
+          // Skip this game for now
+          continue;
+        }
+        
+        // Process if game has ended (404) or spectator data unavailable (403)
+        if (activeGameResponse.status === 404 || activeGameResponse.status === 403) {
+          completedGames++;
 
           // Fetch the match result
           try {
@@ -99,7 +135,7 @@ serve(async (req) => {
               );
 
               if (participant) {
-                // Update the live game with final stats
+                // Update the live game with final stats and process bets
                 const { error: updateError } = await supabase
                   .from('live_games')
                   .update({
@@ -119,16 +155,18 @@ serve(async (req) => {
 
                 // Process bets for this game
                 await processCompletedGame(liveGame, participant, matchData, supabase);
+
                 console.log(`Successfully processed game ${liveGame.id}`);
               }
             } else {
-              // Match data not available yet
+              // If match data not available yet (common after game ends), mark for retry
               console.log(`Match data not yet available for ${liveGame.id}. Will retry on next cron run.`);
               
+              // Update the live game status to "ended" but not "completed" so we retry later
               await supabase
                 .from('live_games')
                 .update({
-                  status: 'ended',
+                  status: 'ended', // New intermediate status
                   game_end_time: new Date().toISOString()
                 })
                 .eq('id', liveGame.id);
