@@ -10,7 +10,11 @@ export default function SubmitBet() {
   
   // Get playerId from context (playerDetails[0] is the current player)
   const playerId = playerDetails[0]?.puuid;
-  const multipler = userBets.length > 0 ? userBets.length + 1 : 0;
+  
+  // Calculate multiplier based on number of selections that are not 'NONE'
+  const selections = Object.values(userBets).filter(bet => bet !== 'NONE');
+  const multipler = selections.length > 0 ? selections.length + 1 : 0;
+  
   const [betAmt, setAmt] = useState(0);
   const [showToast, setShowToast] = useState(false);
   // Connect to db
@@ -50,7 +54,10 @@ export default function SubmitBet() {
         body: JSON.stringify({
           user_id: user.id,
           player_id: playerId,
-          selections: userBets,
+          kills: userBets.kills,
+          deaths: userBets.deaths,
+          cs: userBets.cs,
+          assists: userBets.assists,
           amount: betAmt,
         }),
       });
@@ -63,7 +70,7 @@ export default function SubmitBet() {
       const data = await response.json();
       console.log("Submitted to DB", data);
       setAmt(0);
-      setUserBets([]);
+      setUserBets({ kills: 'NONE', deaths: 'NONE', cs: 'NONE', assists: 'NONE' });
       setResetBet(true);
       setShowToast(true);
       setTimeout(() => {

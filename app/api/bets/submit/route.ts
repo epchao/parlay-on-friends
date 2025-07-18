@@ -3,11 +3,20 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(request: Request) {
   try {
     // Extract request parameters
-    const { user_id, player_id, selections, amount } = await request.json();
+    const { user_id, player_id, live_game_id, amount, kills, deaths, cs, assists } = await request.json();
     // Check all fields were specified
-    if (!user_id || !player_id || !selections || !amount) {
+    if (!user_id || !player_id || !amount) {
       return Response.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Validate that at least one selection is made
+    const selections = [kills, deaths, cs, assists].filter(selection => selection && selection !== 'NONE');
+    if (selections.length === 0) {
+      return Response.json(
+        { error: "At least one bet selection is required" }, 
         { status: 400 }
       );
     }
@@ -44,18 +53,27 @@ export async function POST(request: Request) {
       return Response.json({ error: "Player not currently in a live game" }, { status: 400 });
     }
 
+    const game_id = live_game_id || liveGame.id;
     const multiplier = selections.length + 1;
+    const potential_winnings = amount * multiplier;
 
-    // Insert
+    // Use upsert to update existing bet or insert new one
     const { error } = await supabase
       .from("bets")
-      .insert({ 
-        user_id, 
-        player_id, 
-        selections, 
-        amount, 
-        multiplier, 
-        live_game_id: liveGame.id 
+      .upsert({
+        user_id,
+        player_id,
+        live_game_id: game_id,
+        amount,
+        kills: kills || 'NONE',
+        deaths: deaths || 'NONE', 
+        cs: cs || 'NONE',
+        assists: assists || 'NONE',
+        multiplier,
+        potential_winnings,
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,player_id,live_game_id'
       });
 
     // Check if error happened while inserting
@@ -82,10 +100,14 @@ export async function POST(request: Request) {
     return Response.json({
       user_id,
       player_id,
-      selections,
+      kills: kills || 'NONE',
+      deaths: deaths || 'NONE',
+      cs: cs || 'NONE', 
+      assists: assists || 'NONE',
       amount,
       multiplier,
-      live_game_id: liveGame.id,
+      potential_winnings,
+      live_game_id: game_id,
       newBalance,
     });
   } catch (error) {
