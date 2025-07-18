@@ -65,6 +65,7 @@ export async function POST(request: Request) {
           tag: tag,
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
+          rank_data: rankedData.response,
         })
         .eq("id", puuid);
 
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
           tag: tag,
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
+          rank_data: rankedData.response,
         });
 
       if (insertError) {
@@ -137,7 +139,9 @@ export async function POST(request: Request) {
       const flexRank = rankData.find((r) => r.queueType === "RANKED_FLEX_SR");
 
       // Get champion info for current player
-      const championData = await fetchChampion(currentPlayerParticipant.championId);
+      const championData = await fetchChampion(
+        currentPlayerParticipant.championId
+      );
       let championName = "Unknown";
       let championImageName = "Garen";
 
@@ -153,9 +157,11 @@ export async function POST(request: Request) {
         name: riotId,
         tag: tag,
         level: summoner.response.summonerLevel,
-        icon: dd.images.profileicon(summoner.response.profileIconId.toString()) + '.webp',
+        icon:
+          dd.images.profileicon(summoner.response.profileIconId.toString()) +
+          ".webp",
         champion: championName,
-        championImage: dd.images.champion(championImageName) + '.webp',
+        championImage: dd.images.champion(championImageName) + ".webp",
         soloDuoRank: soloRank
           ? `${soloRank.tier} ${soloRank.rank}`
           : "Unranked",
@@ -214,6 +220,7 @@ export async function POST(request: Request) {
                   tag: participantAccount.response.tagLine,
                   summoner_level: participantSummoner.response.summonerLevel,
                   profile_icon_id: participantSummoner.response.profileIconId,
+                  rank_data: participantRanked.response,
                 });
             }
           }
@@ -305,9 +312,12 @@ export async function POST(request: Request) {
             name: participantAccount.response.gameName,
             tag: participantAccount.response.tagLine,
             level: participantSummoner.response.summonerLevel,
-            icon: dd.images.profileicon(participantSummoner.response.profileIconId.toString()) + '.webp',
+            icon:
+              dd.images.profileicon(
+                participantSummoner.response.profileIconId.toString()
+              ) + ".webp",
             champion: championName,
-            championImage: dd.images.champion(championImageName) + '.webp',
+            championImage: dd.images.champion(championImageName) + ".webp",
             soloDuoRank: participantSoloRank
               ? `${participantSoloRank.tier} ${participantSoloRank.rank}`
               : "Unranked",
@@ -340,16 +350,21 @@ export async function POST(request: Request) {
             championImageName = championData.championImageName;
           }
 
-          console.log(participant.championId, championData, championName, championImageName);
+          console.log(
+            participant.championId,
+            championData,
+            championName,
+            championImageName
+          );
 
           return {
             puuid: participant.puuid,
             name: "Unknown",
             tag: "UNK",
             level: 30,
-            icon: dd.images.profileicon("29") + '.webp',
+            icon: dd.images.profileicon("29") + ".webp",
             champion: championName,
-            championImage: dd.images.champion(championImageName) + '.webp',
+            championImage: dd.images.champion(championImageName) + ".webp",
             soloDuoRank: "Unranked",
             flexRank: "Unranked",
             soloDuoRankImage:
@@ -393,15 +408,16 @@ export async function POST(request: Request) {
       // Use upsert to either insert new live game or update existing one
       const { error: liveGameError } = await supabase
         .from("live_games")
-        .upsert({
-          id: `NA1_${activeGame.response.gameId}`,
-          player_id: puuid,
-          game_start_time: activeGame.response.gameStartTime,
-          status: "in_progress",
-          game_data: completeGameData,
-        }, {
-          onConflict: 'id'
-        });
+        .upsert(
+          {
+            id: `NA1_${activeGame.response.gameId}`,
+            player_id: puuid,
+            game_start_time: activeGame.response.gameStartTime,
+            status: "in_progress",
+            game_data: completeGameData,
+          },
+          { onConflict: "id" }
+        );
 
       if (liveGameError) {
         console.error("Error upserting live game:", liveGameError);
@@ -412,12 +428,19 @@ export async function POST(request: Request) {
       }
     } catch (gameError: any) {
       // Handle different types of errors more specifically
-      if (gameError.message && gameError.message.includes("Unexpected token '<'")) {
-        console.log(`Riot API returned XML error page for ${riotId}#${tag} - likely no active game or API issue`);
+      if (
+        gameError.message &&
+        gameError.message.includes("Unexpected token '<'")
+      ) {
+        console.log(
+          `Riot API returned XML error page for ${riotId}#${tag} - likely no active game or API issue`
+        );
       } else if (gameError.status === 404) {
         console.log(`No active game found for ${riotId}#${tag}`);
       } else {
-        console.log(`Error fetching active game for ${riotId}#${tag}: ${gameError.message || gameError}`);
+        console.log(
+          `Error fetching active game for ${riotId}#${tag}: ${gameError.message || gameError}`
+        );
         console.error("Full error details:", gameError);
       }
     }
@@ -495,7 +518,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: existingPlayer ? "Player data refreshed successfully" : "Player registered successfully",
+      message: existingPlayer
+        ? "Player data refreshed successfully"
+        : "Player registered successfully",
       playerId: puuid,
       isNewPlayer: !existingPlayer,
     });
