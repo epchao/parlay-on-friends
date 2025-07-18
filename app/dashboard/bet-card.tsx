@@ -57,7 +57,7 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
           height={128}
           className="rounded-full mb-4 mx-auto"
         />
-        <h2 className="text-xl font-bold flex justify-center item-center mb-2">
+        <h2 className="text-xl font-bold flex justify-center item-center text-center text-nowrap mb-2">
           {playerName}
         </h2>
 

@@ -53,27 +53,25 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
       try {
         // First, try the cached API
-        let response = await fetch(
-          `/api/live-games?riotId=${name}&tag=${tag}`
-        );
+        let response = await fetch(`/api/live-games?riotId=${name}&tag=${tag}`);
 
         // If player not found in cache, register them first
         if (response.status === 404) {
-          console.log('Player not in cache or not in game, registering to fetch fresh data...');
+          console.log(
+            "Player not in cache or not in game, registering to fetch fresh data..."
+          );
           // Keep loading state active during registration
-          
-          const registerResponse = await fetch('/api/players/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ riotId: name, tag: tag })
+
+          const registerResponse = await fetch("/api/players/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ riotId: name, tag: tag }),
           });
 
           if (registerResponse.ok) {
-            console.log('Player registered, trying cached API again...');
+            console.log("Player registered, trying cached API again...");
             // Try the cached API again after registration
-            response = await fetch(
-              `/api/live-games?riotId=${name}&tag=${tag}`
-            );
+            response = await fetch(`/api/live-games?riotId=${name}&tag=${tag}`);
           } else {
             setError("Failed to register player. Please try again.");
             return;
@@ -83,7 +81,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         if (!response.ok) {
           if (response.status === 404) {
             const errorData = await response.json();
-            if (errorData.error === 'Player not currently in game') {
+            if (errorData.error === "Player not currently in game") {
               setError("This player is currently not in game.");
             } else {
               setError("Player not found in system.");
@@ -124,24 +122,24 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
     // Subscribe to real-time changes in live_games table
     const supabase = createClient();
-    
+
     const subscription = supabase
-      .channel('live_games_changes')
+      .channel("live_games_changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'live_games',
-          filter: `player_id=eq.${currentPlayer.puuid}`
+          event: "UPDATE",
+          schema: "public",
+          table: "live_games",
+          filter: `player_id=eq.${currentPlayer.puuid}`,
         },
         (payload: any) => {
-          console.log('Live game status changed:', payload);
-          
+          console.log("Live game status changed:", payload);
+
           // If the game status changed to completed, reset the UI
-          if (payload.new.status === 'completed') {
-            console.log('Game completed, resetting UI...');
-            
+          if (payload.new.status === "completed") {
+            console.log("Game completed, resetting UI...");
+
             setCurrentPlayer(null);
             setPlayerDetails([]);
             setTime(0);
@@ -179,9 +177,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   return (
     <>
       {/* Main Container */}
-      <main className="bg-gray-700 min-w-[90dvw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm xl:text-base">
+      <main className="bg-gray-700 min-w-[85vw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm xl:text-base ">
         {/* Player info container */}
-        <section className="bg-gray-800 m-3 row-s n-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
+        <section className="bg-gray-800 m-3 row-span-5 n-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
           {/* Player icon */}
           <div className="flex flex-col items-center">
             <div className="relative mb-6 sm:mb-4 lg:mb-6 xl:mb-8">
