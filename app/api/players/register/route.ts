@@ -490,7 +490,6 @@ export async function POST(request: Request) {
             weighted_avg_deaths: avgDeaths,
             weighted_avg_assists: avgAssists,
             weighted_avg_cs: avgCs,
-            last_checked: new Date().toISOString(),
           })
           .eq("id", puuid);
       }
