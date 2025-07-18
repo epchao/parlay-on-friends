@@ -165,11 +165,11 @@ export async function POST(request: Request) {
           : "Unranked",
         flexRank: flexRank ? `${flexRank.tier} ${flexRank.rank}` : "Unranked",
         soloDuoRankImage: soloRank
-          ? `https://cdn.communitydragon.org/latest/ranked/${soloRank.tier.toLowerCase()}.png`
-          : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
+          ? `https://opgg-static.akamaized.net/images/medals_new/${soloRank.tier.toLowerCase()}.png`
+          : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
         flexRankImage: flexRank
-          ? `https://cdn.communitydragon.org/latest/ranked/${flexRank.tier.toLowerCase()}.png`
-          : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
+          ? `https://opgg-static.akamaized.net/images/medals_new/${flexRank.tier.toLowerCase()}.png`
+          : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
       };
 
       // Transform participants to the format expected by the frontend
@@ -321,11 +321,11 @@ export async function POST(request: Request) {
               ? `${participantFlexRank.tier} ${participantFlexRank.rank}`
               : "Unranked",
             soloDuoRankImage: participantSoloRank
-              ? `https://cdn.communitydragon.org/latest/ranked/${participantSoloRank.tier.toLowerCase()}.png`
-              : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
+              ? `https://opgg-static.akamaized.net/images/medals_new/${participantSoloRank.tier.toLowerCase()}.png`
+              : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
             flexRankImage: participantFlexRank
-              ? `https://cdn.communitydragon.org/latest/ranked/${participantFlexRank.tier.toLowerCase()}.png`
-              : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
+              ? `https://opgg-static.akamaized.net/images/medals_new/${participantFlexRank.tier.toLowerCase()}.png`
+              : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
             avgKills: avgKills,
             avgDeaths: avgDeaths,
             avgAssists: avgAssists,
@@ -359,9 +359,9 @@ export async function POST(request: Request) {
             soloDuoRank: "Unranked",
             flexRank: "Unranked",
             soloDuoRankImage:
-              "https://cdn.communitydragon.org/latest/ranked/unranked.png",
+              "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
             flexRankImage:
-              "https://cdn.communitydragon.org/latest/ranked/unranked.png",
+              "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
             avgKills: 0,
             avgDeaths: 0,
             avgAssists: 0,
