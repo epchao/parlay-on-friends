@@ -67,3 +67,34 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom animations for balance component */
+@keyframes balance-increase {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1.05); }
+}
+
+@keyframes balance-decrease {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+  100% { transform: scale(0.95); }
+}
+
+@keyframes money-up {
+  0% { transform: translateY(0px); opacity: 1; }
+  100% { transform: translateY(-10px); opacity: 0; }
+}
+
+@keyframes money-down {
+  0% { transform: translateY(0px); opacity: 1; }
+  100% { transform: translateY(10px); opacity: 0; }
+}
+
+.balance-increase {
+  animation: balance-increase 0.6s ease-in-out;
+}
+
+.balance-decrease {
+  animation: balance-decrease 0.6s ease-in-out;
+}

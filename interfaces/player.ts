@@ -1,4 +1,5 @@
 export interface Player {
+  puuid: string;
   name: string;
   tag: string;
   icon?: string;
@@ -9,6 +10,8 @@ export interface Player {
   flexRankImage?: string;
   champion: string;
   championImage?: string;
-  avgKda: number;
-  avgCs: number;
+  avgKills?: number;
+  avgDeaths?: number;
+  avgAssists?: number;
+  avgCs?: number;
 }
