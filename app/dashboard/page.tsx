@@ -1,10 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import BetCards from "./bet-cards";
-import { DashboardWrapper } from "./dashboard-wrapper";
-import PlayerDisplay from "./player-display";
-import SubmitBet from "./submit-bet";
-import BetWinNotification from "./bet-win-notification";
+import PlayerSearchForm from "./player-search-form";
 
 export default async function dashboardPage() {
   const supabase = await createClient();
@@ -17,17 +13,14 @@ export default async function dashboardPage() {
     return redirect("/sign-in");
   }
 
-  const playerName = "meimei";
-  const playerTag = "tea";
-
   return (
     <div className="flex-1 w-full flex flex-col gap-6 justify-center items-center">
-      <DashboardWrapper>
-        <PlayerDisplay name={playerName} tag={playerTag} />
-        <BetCards />
-        <SubmitBet />
-      </DashboardWrapper>
-      <BetWinNotification />
+      <div className="w-full max-w-md mx-auto">
+        <h1 className="text-4xl font-bold text-center mb-8">
+          Track a Player
+        </h1>
+        <PlayerSearchForm />
+      </div>
     </div>
   );
 }

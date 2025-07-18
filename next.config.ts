@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  reactStrictMode: false, // CAUTION: This is set to false to avoid double render errors in development when loading player pages.
   images: {
     remotePatterns: [
       {
