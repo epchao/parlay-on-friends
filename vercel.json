@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/update-game-status",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
