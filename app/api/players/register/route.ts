@@ -66,7 +66,6 @@ export async function POST(request: Request) {
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
           rank_data: rankedData.response,
-          last_checked: new Date().toISOString(),
         })
         .eq("id", puuid);
 
@@ -89,7 +88,6 @@ export async function POST(request: Request) {
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
           rank_data: rankedData.response,
-          last_checked: new Date().toISOString(),
         });
 
       if (insertError) {
@@ -219,7 +217,6 @@ export async function POST(request: Request) {
                   summoner_level: participantSummoner.response.summonerLevel,
                   profile_icon_id: participantSummoner.response.profileIconId,
                   rank_data: participantRanked.response,
-                  last_checked: new Date().toISOString(),
                 });
             }
           }
