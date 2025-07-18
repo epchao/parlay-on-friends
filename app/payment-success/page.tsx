@@ -8,9 +8,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 export default async function PaymentSuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams: Promise<{ session_id?: string }>;
 }) {
-  const session_id = searchParams.session_id;
+  const resolvedSearchParams = await searchParams;
+  const session_id = resolvedSearchParams.session_id;
 
   if (!session_id) {
     return <p className="text-center mt-10">Invalid payment session.</p>;
