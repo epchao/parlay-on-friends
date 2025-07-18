@@ -5,6 +5,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
 import AddFundsButton from "./nav/AddFundsButton";
+import AnimatedBalance from "./animated-balance";
 
 export default async function AuthButton() {
   const supabase = await createClient();
@@ -63,7 +64,8 @@ export default async function AuthButton() {
   }
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}! You have ${balance}.
+      <span className="text-sm">Hey, {user.email}!</span>
+      <AnimatedBalance userId={user.id} initialBalance={balance} />
       <AddFundsButton />
       <form action={signOutAction}>
         <Button type="submit" variant={"outline"}>

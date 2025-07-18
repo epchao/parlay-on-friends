@@ -3,7 +3,7 @@
 import { Player } from "@/interfaces/player";
 import Image from "next/image";
 import { useEffect, useState, useContext, useRef } from "react";
-import { calculateGameTime } from "../api/get-current-game-info/calculateGametime";
+import { calculateGameTime } from "../api/live-games/calculateGametime";
 import { DataContext } from "./dashboard-wrapper";
 import { createClient } from "@/utils/supabase/client";
 
@@ -54,12 +54,13 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
       try {
         // First, try the cached API
         let response = await fetch(
-          `/api/get-current-game-info?riotId=${name}&tag=${tag}`
+          `/api/live-games?riotId=${name}&tag=${tag}`
         );
 
         // If player not found in cache, register them first
         if (response.status === 404) {
-          console.log('Player not in cache, registering...');
+          console.log('Player not in cache or not in game, registering to fetch fresh data...');
+          // Keep loading state active during registration
           
           const registerResponse = await fetch('/api/players/register', {
             method: 'POST',
@@ -68,10 +69,14 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           });
 
           if (registerResponse.ok) {
+            console.log('Player registered, trying cached API again...');
             // Try the cached API again after registration
             response = await fetch(
-              `/api/get-current-game-info?riotId=${name}&tag=${tag}`
+              `/api/live-games?riotId=${name}&tag=${tag}`
             );
+          } else {
+            setError("Failed to register player. Please try again.");
+            return;
           }
         }
 
@@ -80,8 +85,6 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             const errorData = await response.json();
             if (errorData.error === 'Player not currently in game') {
               setError("This player is currently not in game.");
-            } else if (errorData.error === 'No recent game data available') {
-              setError("No recent game data available for this player.");
             } else {
               setError("Player not found in system.");
             }

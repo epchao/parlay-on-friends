@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { createDdragon, withWebp } from "@lolmath/ddragon";
+
+const dd = createDdragon(withWebp());
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -48,6 +51,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Player not currently in game' }, { status: 404 });
     }
 
+    // Check if it's a ranked game (420 = Solo/Duo, 440 = Flex)
+    if (liveGame.game_data?.gameQueueConfigId && 
+        ![420, 440].includes(liveGame.game_data.gameQueueConfigId)) {
+      return NextResponse.json({
+        error: "Player not currently playing a ranked match",
+      }, { status: 400 });
+    }
+
     // If we have stored game_data, use it. Otherwise fallback to basic data
     if (liveGame.game_data) {
       const gameData = liveGame.game_data;
@@ -59,6 +70,7 @@ export async function GET(request: Request) {
         allies: gameData.allies || [],
         enemies: gameData.enemies || [],
         allyColor: gameData.allyColor || 'blue',
+        enemyColor: (gameData.allyColor || 'blue') === 'blue' ? 'red' : 'blue',
         inGame: true,
         liveGameId: liveGame.id
       });
@@ -76,8 +88,8 @@ export async function GET(request: Request) {
           tag: player.tag,
           level: player.summoner_level || 30,
           icon: player.profile_icon_id ? 
-            `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/${player.profile_icon_id}.png` :
-            'https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/29.png',
+            dd.images.profileicon(player.profile_icon_id.toString()) + '.webp' :
+            dd.images.profileicon("29") + '.webp',
           champion: '',
           championImage: '',
           soloDuoRank: soloRank ? `${soloRank.tier} ${soloRank.rank}` : 'Unranked',
@@ -94,6 +106,7 @@ export async function GET(request: Request) {
         allies: [],
         enemies: [],
         allyColor: 'blue',
+        enemyColor: 'red',
         inGame: true,
         liveGameId: liveGame.id
       });

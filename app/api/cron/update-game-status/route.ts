@@ -238,9 +238,9 @@ async function processCompletedGame(liveGame: any, participant: any, matchRespon
         winnings = Number(bet.amount) * Number(bet.multiplier);
         
         // Update user balance
-        const { error: balanceError } = await supabase.rpc('increment_user_balance', {
-          user_uuid: bet.user_id,
-          amount: winnings
+        const { error: balanceError } = await supabase.rpc('increment_balance', {
+          p_user_id: bet.user_id,
+          p_amount: winnings
         });
 
         if (balanceError) {

@@ -1,36 +1,12 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { RiotApi, LolApi, Constants } from "twisted";
+import { NextResponse } from "next/server";
+import { Constants, LolApi, RiotApi } from "twisted";
+import { fetchChampion, preloadChampionData } from "./fetchChampion";
+import { createDdragon, withWebp } from "@lolmath/ddragon";
 
 const riotApi = new RiotApi({ key: process.env.RIOT_KEY_SECRET });
 const lolApi = new LolApi({ key: process.env.RIOT_KEY_SECRET });
-
-async function fetchChampion(
-  championId: number | undefined
-): Promise<{ championName: string; championImageName: string } | undefined> {
-  if (!championId) return undefined;
-  
-  try {
-    const response = await fetch(
-      "https://ddragon.leagueoflegends.com/cdn/15.7.1/data/en_US/champion.json"
-    );
-    const data = await response.json();
-    const champions = await data.data;
-
-    for (const champion in champions) {
-      if (parseInt(champions[champion].key) === championId) {
-        return {
-          championName: champions[champion].name,
-          championImageName: champions[champion].id,
-        };
-      }
-    }
-  } catch (error) {
-    console.error(`Error fetching champion data for ID ${championId}:`, error);
-  }
-  
-  return undefined;
-}
+const dd = createDdragon(withWebp());
 
 export async function POST(request: Request) {
   const { riotId, tag } = await request.json();
@@ -45,6 +21,9 @@ export async function POST(request: Request) {
   const supabase = await createClient();
 
   try {
+    // Preload champion data to make subsequent champion lookups instant
+    await preloadChampionData();
+
     // Get account info from Riot API
     const account = await riotApi.Account.getByRiotId(
       riotId,
@@ -65,44 +44,62 @@ export async function POST(request: Request) {
       .eq("id", puuid)
       .single();
 
-    if (existingPlayer) {
-      return NextResponse.json({
-        message: "Player already registered",
-        playerId: puuid,
-      });
-    }
-
-    // Get summoner info
+    // Get fresh summoner info and ranked data (regardless of whether they exist)
     const summoner = await lolApi.Summoner.getByPUUID(
       puuid,
       Constants.Regions.AMERICA_NORTH
     );
 
-    // Get ranked data
     const rankedData = await lolApi.League.byPUUID(
       puuid,
       Constants.Regions.AMERICA_NORTH
     );
 
-    // Register player in database
-    const { error: insertError } = await supabase
-      .from("players")
-      .insert({
-        id: puuid,
-        riot_id: riotId,
-        tag: tag,
-        summoner_level: summoner.response.summonerLevel,
-        profile_icon_id: summoner.response.profileIconId,
-        rank_data: rankedData.response,
-        last_checked: new Date().toISOString(),
-      });
+    // Either insert new player or update existing player with fresh data
+    if (existingPlayer) {
+      // Update existing player with fresh data
+      const { error: updateError } = await supabase
+        .from("players")
+        .update({
+          riot_id: riotId,
+          tag: tag,
+          summoner_level: summoner.response.summonerLevel,
+          profile_icon_id: summoner.response.profileIconId,
+          rank_data: rankedData.response,
+          last_checked: new Date().toISOString(),
+        })
+        .eq("id", puuid);
 
-    if (insertError) {
-      console.error("Error inserting player:", insertError);
-      return NextResponse.json(
-        { error: "Failed to register player" },
-        { status: 500 }
-      );
+      if (updateError) {
+        console.error("Error updating player:", updateError);
+        return NextResponse.json(
+          { error: "Failed to update player" },
+          { status: 500 }
+        );
+      }
+      console.log(`Updated existing player ${riotId}#${tag} with fresh data`);
+    } else {
+      // Insert new player
+      const { error: insertError } = await supabase
+        .from("players")
+        .insert({
+          id: puuid,
+          riot_id: riotId,
+          tag: tag,
+          summoner_level: summoner.response.summonerLevel,
+          profile_icon_id: summoner.response.profileIconId,
+          rank_data: rankedData.response,
+          last_checked: new Date().toISOString(),
+        });
+
+      if (insertError) {
+        console.error("Error inserting player:", insertError);
+        return NextResponse.json(
+          { error: "Failed to register player" },
+          { status: 500 }
+        );
+      }
+      console.log(`Registered new player ${riotId}#${tag}`);
     }
 
     // Check if player is currently in a game
@@ -160,19 +157,19 @@ export async function POST(request: Request) {
         name: riotId,
         tag: tag,
         level: summoner.response.summonerLevel,
-        icon: `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/${summoner.response.profileIconId}.png`,
+        icon: dd.images.profileicon(summoner.response.profileIconId.toString()) + '.webp',
         champion: championName,
-        championImage: `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/champion/${championImageName}.png`,
+        championImage: dd.images.champion(championImageName) + '.webp',
         soloDuoRank: soloRank
           ? `${soloRank.tier} ${soloRank.rank}`
           : "Unranked",
         flexRank: flexRank ? `${flexRank.tier} ${flexRank.rank}` : "Unranked",
         soloDuoRankImage: soloRank
-          ? `https://opgg-static.akamaized.net/images/medals_new/${soloRank.tier.toLowerCase()}.png`
-          : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
+          ? `https://cdn.communitydragon.org/latest/ranked/${soloRank.tier.toLowerCase()}.png`
+          : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
         flexRankImage: flexRank
-          ? `https://opgg-static.akamaized.net/images/medals_new/${flexRank.tier.toLowerCase()}.png`
-          : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
+          ? `https://cdn.communitydragon.org/latest/ranked/${flexRank.tier.toLowerCase()}.png`
+          : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
       };
 
       // Transform participants to the format expected by the frontend
@@ -314,9 +311,9 @@ export async function POST(request: Request) {
             name: participantAccount.response.gameName,
             tag: participantAccount.response.tagLine,
             level: participantSummoner.response.summonerLevel,
-            icon: `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/${participantSummoner.response.profileIconId}.png`,
+            icon: dd.images.profileicon(participantSummoner.response.profileIconId.toString()) + '.webp',
             champion: championName,
-            championImage: `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/champion/${championImageName}.png`,
+            championImage: dd.images.champion(championImageName) + '.webp',
             soloDuoRank: participantSoloRank
               ? `${participantSoloRank.tier} ${participantSoloRank.rank}`
               : "Unranked",
@@ -324,11 +321,11 @@ export async function POST(request: Request) {
               ? `${participantFlexRank.tier} ${participantFlexRank.rank}`
               : "Unranked",
             soloDuoRankImage: participantSoloRank
-              ? `https://opgg-static.akamaized.net/images/medals_new/${participantSoloRank.tier.toLowerCase()}.png`
-              : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
+              ? `https://cdn.communitydragon.org/latest/ranked/${participantSoloRank.tier.toLowerCase()}.png`
+              : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
             flexRankImage: participantFlexRank
-              ? `https://opgg-static.akamaized.net/images/medals_new/${participantFlexRank.tier.toLowerCase()}.png`
-              : "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
+              ? `https://cdn.communitydragon.org/latest/ranked/${participantFlexRank.tier.toLowerCase()}.png`
+              : "https://cdn.communitydragon.org/latest/ranked/unranked.png",
             avgKills: avgKills,
             avgDeaths: avgDeaths,
             avgAssists: avgAssists,
@@ -349,20 +346,22 @@ export async function POST(request: Request) {
             championImageName = championData.championImageName;
           }
 
+          console.log(participant.championId, championData, championName, championImageName);
+
           return {
             puuid: participant.puuid,
             name: "Unknown",
             tag: "UNK",
             level: 30,
-            icon: "https://ddragon.leagueoflegends.com/cdn/15.7.1/img/profileicon/29.png",
+            icon: dd.images.profileicon("29") + '.webp',
             champion: championName,
-            championImage: `https://ddragon.leagueoflegends.com/cdn/15.7.1/img/champion/${championImageName}.png`,
+            championImage: dd.images.champion(championImageName) + '.webp',
             soloDuoRank: "Unranked",
             flexRank: "Unranked",
             soloDuoRankImage:
-              "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
+              "https://cdn.communitydragon.org/latest/ranked/unranked.png",
             flexRankImage:
-              "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png",
+              "https://cdn.communitydragon.org/latest/ranked/unranked.png",
             avgKills: 0,
             avgDeaths: 0,
             avgAssists: 0,
@@ -397,26 +396,36 @@ export async function POST(request: Request) {
         allyColor: playerTeam === 100 ? "blue" : "red",
       };
 
+      // Use upsert to either insert new live game or update existing one
       const { error: liveGameError } = await supabase
         .from("live_games")
-        .insert({
+        .upsert({
           id: `NA1_${activeGame.response.gameId}`,
           player_id: puuid,
           game_start_time: activeGame.response.gameStartTime,
           status: "in_progress",
           game_data: completeGameData,
+        }, {
+          onConflict: 'id'
         });
 
       if (liveGameError) {
-        console.error("Error inserting live game:", liveGameError);
+        console.error("Error upserting live game:", liveGameError);
       } else {
         console.log(
-          `Successfully created live game with complete data for ${riotId}#${tag}`
+          `Successfully upserted live game with complete data for ${riotId}#${tag}`
         );
       }
     } catch (gameError: any) {
-      // No active game found, that's fine
-      console.log(`No active game for ${riotId}#${tag}`);
+      // Handle different types of errors more specifically
+      if (gameError.message && gameError.message.includes("Unexpected token '<'")) {
+        console.log(`Riot API returned XML error page for ${riotId}#${tag} - likely no active game or API issue`);
+      } else if (gameError.status === 404) {
+        console.log(`No active game found for ${riotId}#${tag}`);
+      } else {
+        console.log(`Error fetching active game for ${riotId}#${tag}: ${gameError.message || gameError}`);
+        console.error("Full error details:", gameError);
+      }
     }
 
     // Calculate weighted averages for the main player on-the-fly
@@ -493,8 +502,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: "Player registered successfully",
+      message: existingPlayer ? "Player data refreshed successfully" : "Player registered successfully",
       playerId: puuid,
+      isNewPlayer: !existingPlayer,
     });
   } catch (error) {
     console.error("Error registering player:", error);

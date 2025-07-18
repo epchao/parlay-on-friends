@@ -4,15 +4,13 @@ import { createClient } from "@/utils/supabase/client";
 import { DataContext } from "./dashboard-wrapper";
 import Toast from "../../components/toast";
 
-export interface SubmitBetProps {
-  playerId: string;
-}
-
-export default function SubmitBet({ playerId }: SubmitBetProps) {
-  const { dataLoaded, userBets, setUserBets, setResetBet } =
+export default function SubmitBet() {
+  const { dataLoaded, userBets, setUserBets, setResetBet, playerDetails } =
     useContext(DataContext);
+  
+  // Get playerId from context (playerDetails[0] is the current player)
+  const playerId = playerDetails[0]?.puuid;
   const multipler = userBets.length > 0 ? userBets.length + 1 : 0;
-  const [balance, setBalance] = useState(0);
   const [betAmt, setAmt] = useState(0);
   const [showToast, setShowToast] = useState(false);
   // Connect to db
@@ -23,20 +21,6 @@ export default function SubmitBet({ playerId }: SubmitBetProps) {
       setAmt(val);
     }
   };
-
-  const getBalance = async () => {
-    try {
-      const response = await fetch("/api/user/balance");
-      const data = await response.json();
-      setBalance(data.balance);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    getBalance();
-  }, []);
 
   // User presses submit button
   const submitHandler = async () => {
@@ -78,7 +62,6 @@ export default function SubmitBet({ playerId }: SubmitBetProps) {
 
       const data = await response.json();
       console.log("Submitted to DB", data);
-      setBalance(data.newBalance);
       setAmt(0);
       setUserBets([]);
       setResetBet(true);
@@ -98,11 +81,6 @@ export default function SubmitBet({ playerId }: SubmitBetProps) {
           Your bet has been successfully placed!
         </Toast>
         <div className="bg-gray-700 p-6 rounded-2xl max-w-[20rem] sm:max-w-sm shadow-lg space-y-4">
-          <div>
-            <p className="text-lg text-white font-semibold">
-              Balance: <span className="text-green-400">${balance}</span>
-            </p>
-          </div>
           <div>
             <p className="text-lg text-white font-semibold">
               Current Multiplier:{" "}
