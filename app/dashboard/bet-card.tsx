@@ -16,33 +16,25 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
   }, [resetBet]);
 
   const handleBetSelection = (betType: "LESS" | "MORE") => {
-    const betKey = type.toLowerCase();
+    const betKey = type.toLowerCase() as 'kills' | 'deaths' | 'cs' | 'assists';
     if (selected === "") {
       setSelected(betType);
-      setUserBets((prevBets) => {
-        // Add the new bet to the array
-        return [...prevBets, { [betKey]: betType }];
-      });
+      setUserBets((prevBets) => ({
+        ...prevBets,
+        [betKey]: betType
+      }));
     } else if (selected === betType) {
       setSelected("");
-      setUserBets((prevBets) => {
-        // Remove the bet from the array
-        return prevBets.filter((bet) => Object.keys(bet)[0] !== betKey);
-      });
+      setUserBets((prevBets) => ({
+        ...prevBets,
+        [betKey]: 'NONE'
+      }));
     } else {
-      if (selected === "MORE") {
-        setSelected("LESS");
-      } else {
-        setSelected("MORE");
-        setUserBets((prevBets) => {
-          // Remove the previous bet of the other type
-          const updatedBets = prevBets.filter(
-            (bet) => Object.keys(bet)[0] !== betKey
-          );
-          // Add the new bet to the array
-          return [...updatedBets, { [betKey]: betType }];
-        });
-      }
+      setSelected(betType);
+      setUserBets((prevBets) => ({
+        ...prevBets,
+        [betKey]: betType
+      }));
     }
   };
 

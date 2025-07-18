@@ -2,13 +2,20 @@
 
 import React, { createContext, useState } from "react";
 
+type UserBets = {
+  kills: 'MORE' | 'LESS' | 'NONE';
+  deaths: 'MORE' | 'LESS' | 'NONE';
+  cs: 'MORE' | 'LESS' | 'NONE';
+  assists: 'MORE' | 'LESS' | 'NONE';
+};
+
 type DataContextProps = {
   dataLoaded: boolean;
   setDataLoaded: React.Dispatch<React.SetStateAction<boolean>>;
   playerDetails: Record<string, any>[];
   setPlayerDetails: React.Dispatch<React.SetStateAction<Record<string, any>[]>>;
-  userBets: Record<string, any>;
-  setUserBets: React.Dispatch<React.SetStateAction<Record<string, string>[]>>;
+  userBets: UserBets;
+  setUserBets: React.Dispatch<React.SetStateAction<UserBets>>;
   resetBet: boolean;
   setResetBet: React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -20,7 +27,7 @@ export const DataContext = createContext<DataContextProps>({
   setDataLoaded: () => {},
   playerDetails: [],
   setPlayerDetails: () => {},
-  userBets: {},
+  userBets: { kills: 'NONE', deaths: 'NONE', cs: 'NONE', assists: 'NONE' },
   setUserBets: () => {},
   resetBet: false,
   setResetBet: () => {},
@@ -29,7 +36,12 @@ export const DataContext = createContext<DataContextProps>({
 export const DashboardWrapper = ({ children }: Props) => {
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [playerDetails, setPlayerDetails] = useState<Record<string, any>[]>([]);
-  const [userBets, setUserBets] = useState<Record<string, string>[]>([]);
+  const [userBets, setUserBets] = useState<UserBets>({ 
+    kills: 'NONE', 
+    deaths: 'NONE', 
+    cs: 'NONE', 
+    assists: 'NONE' 
+  });
   const [resetBet, setResetBet] = useState<boolean>(false);
   return (
     <DataContext.Provider
