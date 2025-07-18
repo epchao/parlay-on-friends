@@ -65,8 +65,6 @@ export async function POST(request: Request) {
           tag: tag,
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
-          rank_data: rankedData.response,
-          last_checked: new Date().toISOString(),
         })
         .eq("id", puuid);
 
@@ -88,8 +86,6 @@ export async function POST(request: Request) {
           tag: tag,
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
-          rank_data: rankedData.response,
-          last_checked: new Date().toISOString(),
         });
 
       if (insertError) {
@@ -218,8 +214,6 @@ export async function POST(request: Request) {
                   tag: participantAccount.response.tagLine,
                   summoner_level: participantSummoner.response.summonerLevel,
                   profile_icon_id: participantSummoner.response.profileIconId,
-                  rank_data: participantRanked.response,
-                  last_checked: new Date().toISOString(),
                 });
             }
           }
@@ -493,7 +487,6 @@ export async function POST(request: Request) {
             weighted_avg_deaths: avgDeaths,
             weighted_avg_assists: avgAssists,
             weighted_avg_cs: avgCs,
-            last_checked: new Date().toISOString(),
           })
           .eq("id", puuid);
       }
