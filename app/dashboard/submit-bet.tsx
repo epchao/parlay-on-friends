@@ -5,20 +5,57 @@ import { DataContext } from "./dashboard-wrapper";
 import Toast from "../../components/toast";
 
 export default function SubmitBet() {
-  const { dataLoaded, userBets, setUserBets, setResetBet, playerDetails } =
+  const { dataLoaded, userBets, setUserBets, playerDetails, loadExistingBets, clearBet, originalBets, gameTime } =
     useContext(DataContext);
   
   // Get playerId from context (playerDetails[0] is the current player)
   const playerId = playerDetails[0]?.puuid;
   
   // Calculate multiplier based on number of selections that are not 'NONE'
-  const selections = Object.values(userBets).filter(bet => bet !== 'NONE');
+  const selections = [userBets.kills, userBets.deaths, userBets.cs, userBets.assists].filter(bet => bet && bet !== 'NONE');
   const multipler = selections.length > 0 ? selections.length + 1 : 0;
   
   const [betAmt, setAmt] = useState(0);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   // Connect to db
   const supabase = createClient();
+
+  // Update bet amount when userBets changes (when existing bet is loaded)
+  useEffect(() => {
+    if (userBets.amount && userBets.amount > 0) {
+      setAmt(userBets.amount);
+    }
+  }, [userBets.amount]);
+
+  // Check if current selections/amount are different from the saved bet
+  const hasChanges = () => {
+    // Must have at least one selection and a valid amount
+    if (multipler === 0 || betAmt <= 0) {
+      return false;
+    }
+
+    if (!originalBets.amount) {
+      // No existing bet, so this would be a new bet
+      return true;
+    }
+    
+    // Compare current state with original saved state
+    const selectionsChanged = 
+      userBets.kills !== originalBets.kills ||
+      userBets.deaths !== originalBets.deaths ||
+      userBets.cs !== originalBets.cs ||
+      userBets.assists !== originalBets.assists;
+      
+    const amountChanged = betAmt !== originalBets.amount;
+    
+    return selectionsChanged || amountChanged;
+  };
+
+  // Check if betting is still allowed (within 5 minutes)
+  const isBettingAllowed = () => {
+    return gameTime < 300; // 300 seconds = 5 minutes
+  };
   const updateInput = (event: ChangeEvent<HTMLInputElement>) => {
     const val = Number(event.target.value);
     if (!isNaN(val)) {
@@ -69,23 +106,49 @@ export default function SubmitBet() {
 
       const data = await response.json();
       console.log("Submitted to DB", data);
-      setAmt(0);
-      setUserBets({ kills: 'NONE', deaths: 'NONE', cs: 'NONE', assists: 'NONE' });
-      setResetBet(true);
+      
+      // Set appropriate toast message based on whether it was an update or new bet
+      const isUpdate = data.isUpdate;
+      setToastMessage(isUpdate ? "Your bet has been successfuly updated!" : "Your bet has been successfully placed!");
+      
+      // Reload existing bets to reflect the updated selections
+      await loadExistingBets(user.id, playerId);
+      
       setShowToast(true);
-      setTimeout(() => {
-        setResetBet(false);
-      }, 100);
     } catch (error) {
       console.error("Unexpected error", error);
+    }
+  };
+
+  // Handler for clearing the bet
+  const clearHandler = async () => {
+    // Get user
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    // No user
+    if (error || !user) {
+      console.error("User not found");
+      return;
+    }
+
+    try {
+      await clearBet(user.id, playerId);
+      setAmt(0);
+      setToastMessage("Your bet has been cleared!");
+      setShowToast(true);
+    } catch (error) {
+      console.error("Failed to clear bet:", error);
     }
   };
 
   return (
     dataLoaded && (
       <div>
-        <Toast show={showToast} onClose={() => setShowToast(false)}>
-          Your bet has been successfully placed!
+        <Toast show={showToast} onClose={() => setShowToast(false)} type="success">
+          {toastMessage}
         </Toast>
         <div className="bg-gray-700 p-6 rounded-2xl max-w-[20rem] sm:max-w-sm shadow-lg space-y-4">
           <div>
@@ -111,13 +174,28 @@ export default function SubmitBet() {
                 {betAmt && betAmt * multipler}
               </div>
             </div>
-            <div className="flex">
+            <div className="flex gap-2">
               <button
-                className="bg-gray-900 hover:bg-green-700 active:bg-green-800 text-white font-semibold px-6 py-2 rounded-lg transition-colors flex-1"
+                className={`font-semibold px-6 py-2 rounded-lg transition-colors flex-1 ${
+                  hasChanges() && multipler > 0 && isBettingAllowed()
+                    ? "bg-gray-900 hover:bg-green-700 active:bg-green-800 text-white"
+                    : "bg-gray-500 text-gray-300 cursor-not-allowed"
+                }`}
                 onClick={submitHandler}
+                disabled={!hasChanges() || multipler === 0 || !isBettingAllowed()}
+                title={!isBettingAllowed() ? "Betting closed after 5 minutes of game time" : ""}
               >
-                Place Entry
+                {!isBettingAllowed() ? "Betting Closed" : userBets.amount ? "Update Entry" : "Place Entry"}
               </button>
+              {userBets.amount && isBettingAllowed() && (
+                <button
+                  className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                  onClick={clearHandler}
+                  title={!isBettingAllowed() ? "Betting closed after 5 minutes of game time" : ""}
+                >
+                  Clear Bet
+                </button>
+              )}
             </div>
           </div>
         </div>

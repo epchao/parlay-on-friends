@@ -22,6 +22,13 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+    // Initialize bet processing statistics
+    let totalBetsProcessed = 0;
+    let totalWinningBets = 0;
+    let totalLosingBets = 0;
+    let totalWinningsAmount = 0;
+    let totalLossesAmount = 0;
+
     // Get Riot API key
     const riotApiKey = Deno.env.get('RIOT_KEY_SECRET')!
     console.log(`Using Riot API key: ${riotApiKey ? 'PRESENT' : 'MISSING'} (length: ${riotApiKey?.length || 0})`);
@@ -154,7 +161,12 @@ serve(async (req) => {
                 }
 
                 // Process bets for this game
-                await processCompletedGame(liveGame, participant, matchData, supabase);
+                const betStats = await processCompletedGame(liveGame, participant, matchData, supabase);
+                totalBetsProcessed += betStats.betsProcessed;
+                totalWinningBets += betStats.winningBets;
+                totalLosingBets += betStats.losingBets;
+                totalWinningsAmount += betStats.winningsAmount;
+                totalLossesAmount += betStats.lossesAmount;
 
                 console.log(`Successfully processed game ${liveGame.id}`);
               }
@@ -185,6 +197,13 @@ serve(async (req) => {
     
     console.log(`✅ SUPABASE CRON JOB COMPLETED at ${endTime.toISOString()}`);
     console.log(`📊 SUMMARY: ${processedGames} games checked, ${completedGames} completed, ${duration}ms duration`);
+    console.log('\n📊 BET PROCESSING SUMMARY:');
+    console.log(`Total bets processed: ${totalBetsProcessed}`);
+    console.log(`Winning bets: ${totalWinningBets}`);
+    console.log(`Losing bets: ${totalLosingBets}`);
+    console.log(`Total winnings paid: $${totalWinningsAmount.toFixed(2)}`);
+    console.log(`Total losses: $${totalLossesAmount.toFixed(2)}`);
+    console.log(`Net payout: $${(totalWinningsAmount - totalLossesAmount).toFixed(2)}`);
 
     return new Response(
       JSON.stringify({ 
@@ -192,7 +211,15 @@ serve(async (req) => {
         processedGames,
         completedGames,
         duration: `${duration}ms`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        betStats: {
+          betsProcessed: totalBetsProcessed,
+          winningBets: totalWinningBets,
+          losingBets: totalLosingBets,
+          totalWinnings: totalWinningsAmount,
+          totalLosses: totalLossesAmount,
+          netPayout: totalWinningsAmount - totalLossesAmount
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
@@ -236,6 +263,13 @@ async function getPlayerWeightedAverage(playerId: string, statType: string, supa
 async function processCompletedGame(liveGame: any, participant: any, matchResponse: any, supabase: any) {
   console.log(`Processing completed game ${liveGame.id}...`);
   
+  // Initialize local statistics
+  let betsProcessed = 0;
+  let winningBets = 0;
+  let losingBets = 0;
+  let winningsAmount = 0;
+  let lossesAmount = 0;
+  
   // Process bets for this game
   const { data: bets, error: betsError } = await supabase
     .from('bets')
@@ -245,8 +279,9 @@ async function processCompletedGame(liveGame: any, participant: any, matchRespon
 
   if (!betsError && bets && bets.length > 0) {
     console.log(`Processing ${bets.length} bets for game ${liveGame.id}`);
-
+    
     for (const bet of bets) {
+      betsProcessed++;
       let winnings = 0;
       const selections = bet.selections as any;
       console.log('Bet selections:', selections);
@@ -282,6 +317,9 @@ async function processCompletedGame(liveGame: any, participant: any, matchRespon
 
       if (allCorrect) {
         winnings = Number(bet.amount) * Number(bet.multiplier);
+        winningBets++;
+        winningsAmount += winnings;
+        console.log(`✅ Bet ${bet.id} WON: $${winnings.toFixed(2)} (${bet.multiplier}x multiplier on $${bet.amount})`);
         
         // Update user balance
         const { error: balanceError } = await supabase.rpc('increment_balance', {
@@ -328,13 +366,29 @@ async function processCompletedGame(liveGame: any, participant: any, matchRespon
         if (notificationError) {
           console.error('Error inserting notification:', notificationError);
         }
+      } else {
+        losingBets++;
+        lossesAmount += Number(bet.amount);
+        console.log(`❌ Bet ${bet.id} LOST: -$${bet.amount} (bet amount lost)`);
       }
 
-      // Mark bet as processed
+      // Mark bet as processed with the amount won/lost
+      const amountWon = allCorrect ? winnings : -Number(bet.amount); // Negative for losses
       await supabase
         .from('bets')
-        .update({ processed_at: new Date().toISOString() })
+        .update({ 
+          processed_at: new Date().toISOString(),
+          processed_amount_won: amountWon
+        })
         .eq('id', bet.id);
     }
   }
+  
+  return {
+    betsProcessed,
+    winningBets,
+    losingBets,
+    winningsAmount,
+    lossesAmount
+  };
 }
