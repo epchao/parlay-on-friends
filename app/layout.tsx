@@ -56,6 +56,15 @@ export default function RootLayout({
               </div>
               <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
                 <p>Parlays on Friends © 2025. All Rights Reserved</p>
+                <div className="flex gap-4">
+                  <a href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Privacy Policy
+                  </a>
+                  <span className="text-muted-foreground">|</span>
+                  <a href="/tos" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Terms of Service
+                  </a>
+                </div>
                 <ThemeSwitcher />
               </footer>
             </div>
