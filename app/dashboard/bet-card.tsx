@@ -4,16 +4,19 @@ import Image from "next/image";
 import React, { useContext, useEffect, useState } from "react";
 import { Bet } from "@/interfaces/bet";
 import { DataContext } from "./dashboard-wrapper";
+import { calculateGameSeconds } from "../api/live-games/calculateGameSeconds";
 
 const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
-  const { dataLoaded, setUserBets, userBets, gameTime } = useContext(DataContext);
+  const { dataLoaded, setUserBets, userBets, gameTime } =
+    useContext(DataContext);
   const [selected, setSelected] = useState("");
+  const gameSeconds = calculateGameSeconds(gameTime);
 
   // Update selected state based on userBets from context
   useEffect(() => {
-    const betKey = type.toLowerCase() as 'kills' | 'deaths' | 'cs' | 'assists';
+    const betKey = type.toLowerCase() as "kills" | "deaths" | "cs" | "assists";
     const currentSelection = userBets[betKey];
-    if (currentSelection && currentSelection !== 'NONE') {
+    if (currentSelection && currentSelection !== "NONE") {
       setSelected(currentSelection);
     } else {
       setSelected("");
@@ -22,26 +25,26 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
 
   const handleBetSelection = (betType: "LESS" | "MORE") => {
     // Don't allow selection if betting window has closed
-    if (gameTime >= 300) return; // 300 seconds = 5 minutes
-    
-    const betKey = type.toLowerCase() as 'kills' | 'deaths' | 'cs' | 'assists';
+    if (gameSeconds >= 300) return; // 300 seconds = 5 minutes
+
+    const betKey = type.toLowerCase() as "kills" | "deaths" | "cs" | "assists";
     if (selected === "") {
       setSelected(betType);
       setUserBets((prevBets) => ({
         ...prevBets,
-        [betKey]: betType
+        [betKey]: betType,
       }));
     } else if (selected === betType) {
       setSelected("");
       setUserBets((prevBets) => ({
         ...prevBets,
-        [betKey]: 'NONE'
+        [betKey]: "NONE",
       }));
     } else {
       setSelected(betType);
       setUserBets((prevBets) => ({
         ...prevBets,
-        [betKey]: betType
+        [betKey]: betType,
       }));
     }
   };
@@ -79,29 +82,29 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
         <div className="absolute bottom-0 left-0 w-full h-12 flex">
           <button
             className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
-              gameTime >= 300 
-                ? "bg-gray-600 cursor-not-allowed" 
+              gameSeconds >= 300
+                ? "bg-gray-600 cursor-not-allowed"
                 : `bg-gray-900 ${selected === "LESS" ? "bg-red-700" : ""} hover:bg-red-600`
             }`}
             onClick={() => {
               handleBetSelection("LESS");
             }}
-            disabled={gameTime >= 300}
-            title={gameTime >= 300 ? "Betting closed after 5 minutes" : ""}
+            disabled={gameSeconds >= 300}
+            title={gameSeconds >= 300 ? "Betting closed after 5 minutes" : ""}
           >
             Less
           </button>
           <button
             className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
-              gameTime >= 300 
-                ? "bg-gray-600 cursor-not-allowed" 
+              gameSeconds >= 300
+                ? "bg-gray-600 cursor-not-allowed"
                 : `bg-gray-900 ${selected === "MORE" ? "bg-green-700" : ""} hover:bg-green-600`
             }`}
             onClick={() => {
               handleBetSelection("MORE");
             }}
-            disabled={gameTime >= 300}
-            title={gameTime >= 300 ? "Betting closed after 5 minutes" : ""}
+            disabled={gameSeconds >= 300}
+            title={gameSeconds >= 300 ? "Betting closed after 5 minutes" : ""}
           >
             More
           </button>

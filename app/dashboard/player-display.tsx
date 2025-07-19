@@ -4,6 +4,7 @@ import { Player } from "@/interfaces/player";
 import Image from "next/image";
 import { useEffect, useState, useContext, useRef } from "react";
 import { calculateGameTime } from "../api/live-games/calculateGametime";
+import { calculateGameSeconds } from "../api/live-games/calculateGameSeconds";
 import { DataContext } from "./dashboard-wrapper";
 import { createClient } from "@/utils/supabase/client";
 
@@ -20,9 +21,18 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   const [enemies, setEnemies] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { dataLoaded, setDataLoaded, playerDetails, setPlayerDetails, loadExistingBets, gameTime, setGameTime } =
-    useContext(DataContext);
+  const {
+    dataLoaded,
+    setDataLoaded,
+    playerDetails,
+    setPlayerDetails,
+    loadExistingBets,
+    gameTime,
+    setGameTime,
+  } = useContext(DataContext);
 
+  const gameSeconds = calculateGameSeconds(gameTime);
+  const gameTimeFormatted = calculateGameTime(gameTime);
   const supabase = createClient();
 
   // Function to create JSX for teams
@@ -109,7 +119,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        
+
         if (user && data.currentPlayer?.puuid) {
           await loadExistingBets(user.id, data.currentPlayer.puuid);
         }
@@ -262,18 +272,18 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           {/* Game data */}
           <div>
             {/* Betting Window Status */}
-            <div className={`py-2 px-3 font-bold text-center ${gameTime < 300 ? 'bg-green-600' : 'bg-red-600'}`}>
-              {gameTime < 300 ? (
-                <span>
-                  Betting Open: {calculateGameTime(300 - gameTime)} remaining
-                </span>
+            <div
+              className={`py-2 px-3 font-bold text-center ${gameSeconds < 300 ? "bg-green-600" : "bg-red-600"}`}
+            >
+              {gameSeconds < 300 ? (
+                <span>Betting Open: {300 - gameSeconds} seconds remaining</span>
               ) : (
                 <span>Betting Closed</span>
               )}
             </div>
             {/* Time */}
             <p className="bg-gray-600 py-2 font-bold">
-              Game Time: {calculateGameTime(gameTime)}
+              Game Time: {gameTimeFormatted}
             </p>
             {/* Blue Team Table */}
             <div>
