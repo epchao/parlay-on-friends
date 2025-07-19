@@ -152,7 +152,7 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
                       ? bet.processed_amount_won > 0
                         ? bet.procecsed_amount_won
                         : 0
-                      : "In Process"}
+                      : "In Progress"}
                   </td>
                   <td className="px-4 py-2">
                     {bet.processed_at ? <Check /> : <Hourglass />}
