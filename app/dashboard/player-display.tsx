@@ -33,6 +33,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
   const gameSeconds = calculateGameSeconds(gameTime);
   const gameTimeFormatted = calculateGameTime(gameTime);
+  const gameMaxBettingTime = 300;
   const supabase = createClient();
 
   // Function to create JSX for teams
@@ -273,10 +274,13 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
           <div>
             {/* Betting Window Status */}
             <div
-              className={`py-2 px-3 font-bold text-center ${gameSeconds < 300 ? "bg-green-600" : "bg-red-600"}`}
+              className={`py-2 px-3 font-bold text-center ${gameSeconds < gameMaxBettingTime ? "bg-green-600" : "bg-red-600"}`}
             >
-              {gameSeconds < 300 ? (
-                <span>Betting Open: {300 - gameSeconds} seconds remaining</span>
+              {gameSeconds < gameMaxBettingTime ? (
+                <span>
+                  Betting Open: {gameMaxBettingTime - gameSeconds} seconds
+                  remaining
+                </span>
               ) : (
                 <span>Betting Closed</span>
               )}

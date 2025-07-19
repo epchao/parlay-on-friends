@@ -11,6 +11,7 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
     useContext(DataContext);
   const [selected, setSelected] = useState("");
   const gameSeconds = calculateGameSeconds(gameTime);
+  const gameMaxBettingTime = 300;
 
   // Update selected state based on userBets from context
   useEffect(() => {
@@ -25,7 +26,7 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
 
   const handleBetSelection = (betType: "LESS" | "MORE") => {
     // Don't allow selection if betting window has closed
-    if (gameSeconds >= 300) return; // 300 seconds = 5 minutes
+    if (gameSeconds >= gameMaxBettingTime) return; // 300 seconds = 5 minutes
 
     const betKey = type.toLowerCase() as "kills" | "deaths" | "cs" | "assists";
     if (selected === "") {
@@ -82,29 +83,37 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
         <div className="absolute bottom-0 left-0 w-full h-12 flex">
           <button
             className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
-              gameSeconds >= 300
+              gameSeconds >= gameMaxBettingTime
                 ? "bg-gray-600 cursor-not-allowed"
                 : `bg-gray-900 ${selected === "LESS" ? "bg-red-700" : ""} hover:bg-red-600`
             }`}
             onClick={() => {
               handleBetSelection("LESS");
             }}
-            disabled={gameSeconds >= 300}
-            title={gameSeconds >= 300 ? "Betting closed after 5 minutes" : ""}
+            disabled={gameSeconds >= gameMaxBettingTime}
+            title={
+              gameSeconds >= gameMaxBettingTime
+                ? "Betting closed after 5 minutes"
+                : ""
+            }
           >
             Less
           </button>
           <button
             className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
-              gameSeconds >= 300
+              gameSeconds >= gameMaxBettingTime
                 ? "bg-gray-600 cursor-not-allowed"
                 : `bg-gray-900 ${selected === "MORE" ? "bg-green-700" : ""} hover:bg-green-600`
             }`}
             onClick={() => {
               handleBetSelection("MORE");
             }}
-            disabled={gameSeconds >= 300}
-            title={gameSeconds >= 300 ? "Betting closed after 5 minutes" : ""}
+            disabled={gameSeconds >= gameMaxBettingTime}
+            title={
+              gameSeconds >= gameMaxBettingTime
+                ? "Betting closed after 5 minutes"
+                : ""
+            }
           >
             More
           </button>

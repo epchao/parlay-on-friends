@@ -3,18 +3,35 @@ import { ChangeEvent, useContext, useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { DataContext } from "./dashboard-wrapper";
 import Toast from "../../components/toast";
+import { calculateGameSeconds } from "../api/live-games/calculateGameSeconds";
 
 export default function SubmitBet() {
-  const { dataLoaded, userBets, setUserBets, playerDetails, loadExistingBets, clearBet, originalBets, gameTime } =
-    useContext(DataContext);
-  
+  const {
+    dataLoaded,
+    userBets,
+    setUserBets,
+    playerDetails,
+    loadExistingBets,
+    clearBet,
+    originalBets,
+    gameTime,
+  } = useContext(DataContext);
+
+  const gameSeconds = calculateGameSeconds(gameTime);
+  const gameMaxBettingTime = 300;
+
   // Get playerId from context (playerDetails[0] is the current player)
   const playerId = playerDetails[0]?.puuid;
-  
+
   // Calculate multiplier based on number of selections that are not 'NONE'
-  const selections = [userBets.kills, userBets.deaths, userBets.cs, userBets.assists].filter(bet => bet && bet !== 'NONE');
+  const selections = [
+    userBets.kills,
+    userBets.deaths,
+    userBets.cs,
+    userBets.assists,
+  ].filter((bet) => bet && bet !== "NONE");
   const multipler = selections.length > 0 ? selections.length + 1 : 0;
-  
+
   const [betAmt, setAmt] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -39,22 +56,22 @@ export default function SubmitBet() {
       // No existing bet, so this would be a new bet
       return true;
     }
-    
+
     // Compare current state with original saved state
-    const selectionsChanged = 
+    const selectionsChanged =
       userBets.kills !== originalBets.kills ||
       userBets.deaths !== originalBets.deaths ||
       userBets.cs !== originalBets.cs ||
       userBets.assists !== originalBets.assists;
-      
+
     const amountChanged = betAmt !== originalBets.amount;
-    
+
     return selectionsChanged || amountChanged;
   };
 
   // Check if betting is still allowed (within 5 minutes)
   const isBettingAllowed = () => {
-    return gameTime < 300; // 300 seconds = 5 minutes
+    return gameSeconds < gameMaxBettingTime; // 300 seconds = 5 minutes
   };
   const updateInput = (event: ChangeEvent<HTMLInputElement>) => {
     const val = Number(event.target.value);
@@ -106,14 +123,18 @@ export default function SubmitBet() {
 
       const data = await response.json();
       console.log("Submitted to DB", data);
-      
+
       // Set appropriate toast message based on whether it was an update or new bet
       const isUpdate = data.isUpdate;
-      setToastMessage(isUpdate ? "Your bet has been successfuly updated!" : "Your bet has been successfully placed!");
-      
+      setToastMessage(
+        isUpdate
+          ? "Your bet has been successfuly updated!"
+          : "Your bet has been successfully placed!"
+      );
+
       // Reload existing bets to reflect the updated selections
       await loadExistingBets(user.id, playerId);
-      
+
       setShowToast(true);
     } catch (error) {
       console.error("Unexpected error", error);
@@ -147,7 +168,11 @@ export default function SubmitBet() {
   return (
     dataLoaded && (
       <div>
-        <Toast show={showToast} onClose={() => setShowToast(false)} type="success">
+        <Toast
+          show={showToast}
+          onClose={() => setShowToast(false)}
+          type="success"
+        >
           {toastMessage}
         </Toast>
         <div className="bg-gray-700 p-6 rounded-2xl max-w-[20rem] sm:max-w-sm shadow-lg space-y-4">
@@ -182,16 +207,30 @@ export default function SubmitBet() {
                     : "bg-gray-500 text-gray-300 cursor-not-allowed"
                 }`}
                 onClick={submitHandler}
-                disabled={!hasChanges() || multipler === 0 || !isBettingAllowed()}
-                title={!isBettingAllowed() ? "Betting closed after 5 minutes of game time" : ""}
+                disabled={
+                  !hasChanges() || multipler === 0 || !isBettingAllowed()
+                }
+                title={
+                  !isBettingAllowed()
+                    ? "Betting closed after 5 minutes of game time"
+                    : ""
+                }
               >
-                {!isBettingAllowed() ? "Betting Closed" : userBets.amount ? "Update Entry" : "Place Entry"}
+                {!isBettingAllowed()
+                  ? "Betting Closed"
+                  : userBets.amount
+                    ? "Update Entry"
+                    : "Place Entry"}
               </button>
               {userBets.amount && isBettingAllowed() && (
                 <button
                   className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
                   onClick={clearHandler}
-                  title={!isBettingAllowed() ? "Betting closed after 5 minutes of game time" : ""}
+                  title={
+                    !isBettingAllowed()
+                      ? "Betting closed after 5 minutes of game time"
+                      : ""
+                  }
                 >
                   Clear Bet
                 </button>
