@@ -74,10 +74,24 @@ export default function SubmitBet() {
     return gameSeconds < gameMaxBettingTime; // 300 seconds = 5 minutes
   };
   const updateInput = (event: ChangeEvent<HTMLInputElement>) => {
-    const val = Number(event.target.value);
-    if (!isNaN(val)) {
-      setAmt(val);
+    const inputValue = event.target.value;
+    
+    // Allow empty string for clearing the input
+    if (inputValue === '') {
+      setAmt(0);
+      return;
     }
+    
+    // Check if the input matches USD currency format (up to 2 decimal places)
+    const currencyRegex = /^\d+(\.\d{0,2})?$/;
+    
+    if (currencyRegex.test(inputValue)) {
+      const val = Number(inputValue);
+      if (!isNaN(val)) {
+        setAmt(val);
+      }
+    }
+    // If input doesn't match the pattern, don't update the state (reject the input)
   };
 
   // User presses submit button
@@ -94,7 +108,7 @@ export default function SubmitBet() {
       return;
     }
 
-    if (betAmt < 1 || multipler < 1) {
+    if (betAmt < 0.01 || multipler < 1) {
       return;
     }
 
@@ -189,14 +203,15 @@ export default function SubmitBet() {
               <input
                 className="rounded-md px-4 py-2 bg-gray-800 text-white placeholder-gray-400 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-green-500 w-1/2"
                 type="number"
-                placeholder="Entry"
+                placeholder="$0.00"
                 value={betAmt === 0 ? "" : betAmt}
                 onChange={updateInput}
-                min="1"
+                min="0.01"
+                step="0.01"
               />
               <div className="bg-gray-800 rounded-md px-4 py-2 text-green-400 font-medium w-1/2">
                 <span className="text-white">To win:</span> $
-                {betAmt && betAmt * multipler}
+                {betAmt && betAmt * multipler ? (betAmt * multipler).toFixed(2) : "0.00"}
               </div>
             </div>
             <div className="flex gap-2">
