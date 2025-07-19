@@ -194,7 +194,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                 {currentPlayer.level}
               </p>
             </div>
-            <p className="text-base lg:text-2xl xl:text-4xl">
+            <p className="text-base lg:text-2xl xl:text-4xl text-center">
               {currentPlayer.name} #{currentPlayer.tag}
             </p>
           </div>

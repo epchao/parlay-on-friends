@@ -14,15 +14,14 @@ export async function GET(request: Request) {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Get betting data
+  // Get betting data and sort by completed and reverse chronological
   const { data: bets, error } = await supabase
     .from("bets")
     .select(
       `id,
       amount,
       potential_winnings,
-      proccessed_amount_won,
-      player_id,
+      processed_amount_won,
       created_at,
       processed_at,
       live_game_id,
@@ -36,7 +35,9 @@ export async function GET(request: Request) {
       )
       `
     )
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .order("processed_at", { ascending: true })
+    .order("created_at", { ascending: false });
 
   // Error querying from database
   if (error)

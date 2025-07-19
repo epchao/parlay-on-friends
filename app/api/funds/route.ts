@@ -22,9 +22,7 @@ export async function POST() {
       {
         price_data: {
           currency: "usd",
-          product_data: {
-            name: "Add Funds",
-          },
+          product_data: { name: "Add Funds" },
           unit_amount: 1000, // $10
         },
         quantity: 1,
