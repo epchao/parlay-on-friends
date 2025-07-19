@@ -52,7 +52,7 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
     getBetData();
   }, [open]);
 
-  if (!open) return null;
+  if (!open || bets === null) return null;
 
   return (
     <div onClick={onClose} className="fixed inset-0">
@@ -94,12 +94,16 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
                     })}
                   </td>
                   <td className="px-4 py-2">
-                    <Link
-                      className="text-blue-500"
-                      href={`/dashboard/player/${bet.player.riot_id}-${bet.player.tag}`}
-                    >
-                      {bet.player.riot_id}#{bet.player.tag}
-                    </Link>
+                    {bet.processed_at ? (
+                      `${bet.player.riot_id}#${bet.player.tag}`
+                    ) : (
+                      <Link
+                        className="text-blue-500"
+                        href={`/dashboard/player/${bet.player.riot_id}-${bet.player.tag}`}
+                      >
+                        {bet.player.riot_id}#{bet.player.tag}
+                      </Link>
+                    )}
                   </td>
                   <td className="px-4 py-2">{bet.amount}</td>
                   <td className="px-4 py-2">{bet.potential_winnings}</td>

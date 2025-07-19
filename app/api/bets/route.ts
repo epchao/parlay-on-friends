@@ -36,9 +36,8 @@ export async function GET(request: Request) {
       `
     )
     .eq("user_id", user.id)
-    .order("processed_at", { ascending: true, nullsFirst: true })
+    .order("processed_at", { ascending: false })
     .order("created_at", { ascending: false });
-
   // Error querying from database
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
