@@ -112,6 +112,9 @@ export default function SubmitBet() {
       return;
     }
 
+    // Ensure bet amount is properly rounded to 2 decimal places for currency precision
+    const precisionBetAmt = Math.round(betAmt * 100) / 100;
+
     // Send submit request
     try {
       const response = await fetch("/api/bets/submit", {
@@ -126,7 +129,7 @@ export default function SubmitBet() {
           deaths: userBets.deaths,
           cs: userBets.cs,
           assists: userBets.assists,
-          amount: betAmt,
+          amount: precisionBetAmt,
         }),
       });
 

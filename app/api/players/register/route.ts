@@ -11,6 +11,8 @@ const dd = createDdragon(withWebp());
 export async function POST(request: Request) {
   const { riotId, tag } = await request.json();
 
+  console.log(`Attempting to register player: ${riotId}#${tag}`);
+
   if (!riotId || !tag) {
     return NextResponse.json(
       { error: "Missing riotId or tag" },
@@ -25,11 +27,27 @@ export async function POST(request: Request) {
     await preloadChampionData();
 
     // Get account info from Riot API
-    const account = await riotApi.Account.getByRiotId(
-      riotId,
-      tag,
-      Constants.RegionGroups.AMERICAS
-    );
+    let account;
+    try {
+      account = await riotApi.Account.getByRiotId(
+        riotId,
+        tag,
+        Constants.RegionGroups.AMERICAS
+      );
+    } catch (accountError: any) {
+      if (accountError.status === 404) {
+        return NextResponse.json(
+          { 
+            error: `Player "${riotId}#${tag}" not found`,
+            details: "No Riot Games account exists with this Riot ID and tag combination. Please verify the spelling and try again.",
+            suggestion: "Check your Riot ID and tag in the League of Legends client or on the Riot Games website."
+          }, 
+          { status: 404 }
+        );
+      }
+      // Re-throw other errors to be handled by the outer catch block
+      throw accountError;
+    }
 
     if (!account.response.puuid) {
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
@@ -524,10 +542,38 @@ export async function POST(request: Request) {
       playerId: puuid,
       isNewPlayer: !existingPlayer,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error registering player:", error);
+    
+    // Provide more specific error messages based on the error type
+    if (error.status === 404) {
+      return NextResponse.json(
+        { 
+          error: `Player "${riotId}#${tag}" not found`,
+          details: "This Riot ID and tag combination does not exist in Riot Games' system.",
+          suggestion: "Please double-check the spelling of both the Riot ID and tag."
+        },
+        { status: 404 }
+      );
+    }
+    
+    if (error.status === 403) {
+      return NextResponse.json(
+        { 
+          error: "API access forbidden",
+          details: "There was an authentication issue with the Riot Games API.",
+          suggestion: "This is a server-side issue. Please try again later."
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Failed to register player",
+        details: "An unexpected error occurred while registering the player.",
+        suggestion: "Please try again. If the problem persists, the player may not exist or there may be a temporary service issue."
+      },
       { status: 500 }
     );
   }
