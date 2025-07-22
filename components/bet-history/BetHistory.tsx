@@ -60,7 +60,7 @@ function ActionButton() {
   }, []);
 
   return (
-    <div className="fixed z-30 bottom-6 right-6 sm:bottom-12 sm:right-12 bg-slate-700 p-2 rounded-full">
+    <div className="fixed z-30 bottom-3 right-3 md:bottom-12 md:right-12 bg-slate-700 p-2 rounded-full">
       <BetPopup open={isOpen} onClose={() => setIsOpen(false)} />
       <div className="relative">
         <CircleDollarSign
@@ -133,7 +133,7 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
     <div onClick={onClose} className="fixed inset-0 bg-black/50">
       <div
         onClick={(e) => e.stopPropagation()}
-        className="fixed bottom-20 right-8 sm:bottom-28 sm:right-14 bg-slate-700 p-4 rounded-xl"
+        className="fixed right-6 bottom-[4.5rem] md:bottom-28 md:right-14 bg-slate-700 p-4 rounded-xl sm:rounded-xl max-h-[80vh] w-[90vw] sm:w-[600px] md:w-[700px] lg:w-[900px] xl:w-[1175px]"
       >
         <h2 className="text-lg font-bold mb-2">Your Bets</h2>
         {loading ? (
@@ -141,12 +141,14 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
         ) : bets.length === 0 ? (
           <p>You haven't made any bets yet!</p>
         ) : (
-          <div className="overflow-x-auto overflow-y-auto max-h-[300px]">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
+            <table className="w-full text-xs xl:text-base">
               <thead>
                 <tr>
-                  <th className="border px-2 py-1">ID</th>
-                  <th className="border px-2 py-1">Placed At</th>
+                  <th className="hidden lg:table-cell border px-2 py-1">ID</th>
+                  <th className="hidden md:table-cell lg:table-cell border px-2 py-1">
+                    Placed At
+                  </th>
                   <th className="border px-2 py-1">Player</th>
                   <th className="border px-2 py-1">Bet Amount</th>
                   <th className="border px-2 py-1">Win Potential</th>
@@ -155,18 +157,22 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
                   <th className="border px-2 py-1">Assists</th>
                   <th className="border px-2 py-1">CS</th>
                   <th className="border px-2 py-1">Winnings</th>
-                  <th className="border px-2 py-1">Status</th>
+                  <th className="hidden lg:table-cell border px-2 py-1">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {bets.map((bet) => (
                   <tr key={bet.id} className="text-center">
-                    <td className="px-4 py-2">{bet.live_game_id}</td>
-                    <td className="px-4 py-2">
+                    <td className="hidden lg:table-cell px-4 py-2">
+                      {bet.live_game_id}
+                    </td>
+                    <td className="hidden md:table-cell lg:table-cell px-4 py-2">
                       {new Date(bet.created_at + "Z").toLocaleString([], {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
+                        year: "2-digit",
+                        month: "2-digit",
+                        day: "2-digit",
                         hour: "2-digit",
                         minute: "2-digit",
                         hour12: true,
@@ -245,7 +251,7 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
                           : 0
                         : "In Progress"}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="hidden lg:table-cell px-4 py-2">
                       {bet.processed_at ? <Check /> : <Hourglass />}
                     </td>
                   </tr>
