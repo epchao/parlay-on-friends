@@ -63,7 +63,7 @@ export default async function AuthButton() {
   }
   return user ? (
     <div className="flex items-center gap-4">
-      <span className="text-sm">Hey, {user.email}!</span>
+      <span className="hidden sm:block text-sm">Hi, {user.email}!</span>
       <AnimatedBalance userId={user.id} initialBalance={balance} />
       <form action={signOutAction}>
         <Button type="submit" variant={"outline"}>
