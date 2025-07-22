@@ -11,6 +11,8 @@ const dd = createDdragon(withWebp());
 export async function POST(request: Request) {
   const { riotId, tag } = await request.json();
 
+  console.log(`Attempting to register player: ${riotId}#${tag}`);
+
   if (!riotId || !tag) {
     return NextResponse.json(
       { error: "Missing riotId or tag" },
@@ -25,11 +27,27 @@ export async function POST(request: Request) {
     await preloadChampionData();
 
     // Get account info from Riot API
-    const account = await riotApi.Account.getByRiotId(
-      riotId,
-      tag,
-      Constants.RegionGroups.AMERICAS
-    );
+    let account;
+    try {
+      account = await riotApi.Account.getByRiotId(
+        riotId,
+        tag,
+        Constants.RegionGroups.AMERICAS
+      );
+    } catch (accountError: any) {
+      if (accountError.status === 404) {
+        return NextResponse.json(
+          { 
+            error: `Player "${riotId}#${tag}" not found`,
+            details: "No Riot Games account exists with this Riot ID and tag combination. Please verify the spelling and try again.",
+            suggestion: "Check your Riot ID and tag in the League of Legends client or on the Riot Games website."
+          }, 
+          { status: 404 }
+        );
+      }
+      // Re-throw other errors to be handled by the outer catch block
+      throw accountError;
+    }
 
     if (!account.response.puuid) {
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
@@ -66,7 +84,6 @@ export async function POST(request: Request) {
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
           rank_data: rankedData.response,
-          last_checked: new Date().toISOString(),
         })
         .eq("id", puuid);
 
@@ -89,7 +106,6 @@ export async function POST(request: Request) {
           summoner_level: summoner.response.summonerLevel,
           profile_icon_id: summoner.response.profileIconId,
           rank_data: rankedData.response,
-          last_checked: new Date().toISOString(),
         });
 
       if (insertError) {
@@ -141,7 +157,9 @@ export async function POST(request: Request) {
       const flexRank = rankData.find((r) => r.queueType === "RANKED_FLEX_SR");
 
       // Get champion info for current player
-      const championData = await fetchChampion(currentPlayerParticipant.championId);
+      const championData = await fetchChampion(
+        currentPlayerParticipant.championId
+      );
       let championName = "Unknown";
       let championImageName = "Garen";
 
@@ -157,9 +175,11 @@ export async function POST(request: Request) {
         name: riotId,
         tag: tag,
         level: summoner.response.summonerLevel,
-        icon: dd.images.profileicon(summoner.response.profileIconId.toString()) + '.webp',
+        icon:
+          dd.images.profileicon(summoner.response.profileIconId.toString()) +
+          ".webp",
         champion: championName,
-        championImage: dd.images.champion(championImageName) + '.webp',
+        championImage: dd.images.champion(championImageName) + ".webp",
         soloDuoRank: soloRank
           ? `${soloRank.tier} ${soloRank.rank}`
           : "Unranked",
@@ -219,7 +239,6 @@ export async function POST(request: Request) {
                   summoner_level: participantSummoner.response.summonerLevel,
                   profile_icon_id: participantSummoner.response.profileIconId,
                   rank_data: participantRanked.response,
-                  last_checked: new Date().toISOString(),
                 });
             }
           }
@@ -311,9 +330,12 @@ export async function POST(request: Request) {
             name: participantAccount.response.gameName,
             tag: participantAccount.response.tagLine,
             level: participantSummoner.response.summonerLevel,
-            icon: dd.images.profileicon(participantSummoner.response.profileIconId.toString()) + '.webp',
+            icon:
+              dd.images.profileicon(
+                participantSummoner.response.profileIconId.toString()
+              ) + ".webp",
             champion: championName,
-            championImage: dd.images.champion(championImageName) + '.webp',
+            championImage: dd.images.champion(championImageName) + ".webp",
             soloDuoRank: participantSoloRank
               ? `${participantSoloRank.tier} ${participantSoloRank.rank}`
               : "Unranked",
@@ -346,16 +368,21 @@ export async function POST(request: Request) {
             championImageName = championData.championImageName;
           }
 
-          console.log(participant.championId, championData, championName, championImageName);
+          console.log(
+            participant.championId,
+            championData,
+            championName,
+            championImageName
+          );
 
           return {
             puuid: participant.puuid,
             name: "Unknown",
             tag: "UNK",
             level: 30,
-            icon: dd.images.profileicon("29") + '.webp',
+            icon: dd.images.profileicon("29") + ".webp",
             champion: championName,
-            championImage: dd.images.champion(championImageName) + '.webp',
+            championImage: dd.images.champion(championImageName) + ".webp",
             soloDuoRank: "Unranked",
             flexRank: "Unranked",
             soloDuoRankImage:
@@ -399,15 +426,16 @@ export async function POST(request: Request) {
       // Use upsert to either insert new live game or update existing one
       const { error: liveGameError } = await supabase
         .from("live_games")
-        .upsert({
-          id: `NA1_${activeGame.response.gameId}`,
-          player_id: puuid,
-          game_start_time: activeGame.response.gameStartTime,
-          status: "in_progress",
-          game_data: completeGameData,
-        }, {
-          onConflict: 'id'
-        });
+        .upsert(
+          {
+            id: `NA1_${activeGame.response.gameId}`,
+            player_id: puuid,
+            game_start_time: activeGame.response.gameStartTime,
+            status: "in_progress",
+            game_data: completeGameData,
+          },
+          { onConflict: "id" }
+        );
 
       if (liveGameError) {
         console.error("Error upserting live game:", liveGameError);
@@ -418,12 +446,19 @@ export async function POST(request: Request) {
       }
     } catch (gameError: any) {
       // Handle different types of errors more specifically
-      if (gameError.message && gameError.message.includes("Unexpected token '<'")) {
-        console.log(`Riot API returned XML error page for ${riotId}#${tag} - likely no active game or API issue`);
+      if (
+        gameError.message &&
+        gameError.message.includes("Unexpected token '<'")
+      ) {
+        console.log(
+          `Riot API returned XML error page for ${riotId}#${tag} - likely no active game or API issue`
+        );
       } else if (gameError.status === 404) {
         console.log(`No active game found for ${riotId}#${tag}`);
       } else {
-        console.log(`Error fetching active game for ${riotId}#${tag}: ${gameError.message || gameError}`);
+        console.log(
+          `Error fetching active game for ${riotId}#${tag}: ${gameError.message || gameError}`
+        );
         console.error("Full error details:", gameError);
       }
     }
@@ -493,7 +528,6 @@ export async function POST(request: Request) {
             weighted_avg_deaths: avgDeaths,
             weighted_avg_assists: avgAssists,
             weighted_avg_cs: avgCs,
-            last_checked: new Date().toISOString(),
           })
           .eq("id", puuid);
       }
@@ -502,14 +536,44 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: existingPlayer ? "Player data refreshed successfully" : "Player registered successfully",
+      message: existingPlayer
+        ? "Player data refreshed successfully"
+        : "Player registered successfully",
       playerId: puuid,
       isNewPlayer: !existingPlayer,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error registering player:", error);
+    
+    // Provide more specific error messages based on the error type
+    if (error.status === 404) {
+      return NextResponse.json(
+        { 
+          error: `Player "${riotId}#${tag}" not found`,
+          details: "This Riot ID and tag combination does not exist in Riot Games' system.",
+          suggestion: "Please double-check the spelling of both the Riot ID and tag."
+        },
+        { status: 404 }
+      );
+    }
+    
+    if (error.status === 403) {
+      return NextResponse.json(
+        { 
+          error: "API access forbidden",
+          details: "There was an authentication issue with the Riot Games API.",
+          suggestion: "This is a server-side issue. Please try again later."
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Failed to register player",
+        details: "An unexpected error occurred while registering the player.",
+        suggestion: "Please try again. If the problem persists, the player may not exist or there may be a temporary service issue."
+      },
       { status: 500 }
     );
   }

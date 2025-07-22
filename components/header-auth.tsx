@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
-import AddFundsButton from "./nav/AddFundsButton";
 import AnimatedBalance from "./animated-balance";
 
 export default async function AuthButton() {
@@ -64,9 +63,8 @@ export default async function AuthButton() {
   }
   return user ? (
     <div className="flex items-center gap-4">
-      <span className="text-sm">Hey, {user.email}!</span>
+      <span className="hidden sm:block text-sm">Hi, {user.email}!</span>
       <AnimatedBalance userId={user.id} initialBalance={balance} />
-      <AddFundsButton />
       <form action={signOutAction}>
         <Button type="submit" variant={"outline"}>
           Sign out

@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 
-type Props = { 
-  children: React.ReactNode; 
-  show: boolean; 
+type Props = {
+  children: React.ReactNode;
+  show: boolean;
   onClose: () => void;
-  type?: 'success' | 'info' | 'warning' | 'error';
+  type?: "success" | "info" | "warning" | "error";
   duration?: number;
 };
 
-export default function Toast({ children, show, onClose, type = 'success', duration = 3000 }: Props) {
+export default function Toast({
+  children,
+  show,
+  onClose,
+  type = "success",
+  duration = 3000,
+}: Props) {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -16,13 +22,13 @@ export default function Toast({ children, show, onClose, type = 'success', durat
     if (show) {
       setShouldRender(true);
       setTimeout(() => setIsVisible(true), 10);
-      
+
       const timer = setTimeout(() => {
         handleClose();
       }, duration);
 
       return () => clearTimeout(timer);
-    } 
+    }
   }, [show, duration]);
 
   useEffect(() => {
@@ -43,26 +49,33 @@ export default function Toast({ children, show, onClose, type = 'success', durat
 
   const getBackgroundColor = () => {
     switch (type) {
-      case 'success': return 'bg-green-700';
-      case 'info': return 'bg-blue-700';
-      case 'warning': return 'bg-yellow-700';
-      case 'error': return 'bg-red-700';
-      default: return 'bg-green-700';
+      case "success":
+        return "bg-green-700";
+      case "info":
+        return "bg-blue-700";
+      case "warning":
+        return "bg-yellow-700";
+      case "error":
+        return "bg-red-700";
+      default:
+        return "bg-green-700";
     }
   };
 
   return (
-    <div 
+    <div
       className={`
-        fixed bottom-8 right-8 ${getBackgroundColor()} text-white px-6 py-3 rounded-lg shadow-lg max-w-sm z-50
+        fixed bottom-32 right-8 ${getBackgroundColor()} text-white px-6 py-3 rounded-lg shadow-lg max-w-sm z-50
         transition-all duration-300 ease-in-out transform
-        ${isVisible 
-          ? 'translate-x-0 opacity-100 scale-100' 
-          : 'translate-x-full opacity-0 scale-95'
+        ${
+          isVisible
+            ? "translate-x-0 opacity-100 scale-100"
+            : "translate-x-full opacity-0 scale-95"
         }
       `}
       style={{
-        transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out, scale 0.3s ease-in-out'
+        transition:
+          "transform 0.3s ease-in-out, opacity 0.3s ease-in-out, scale 0.3s ease-in-out",
       }}
     >
       {children}

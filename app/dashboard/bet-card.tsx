@@ -4,45 +4,49 @@ import Image from "next/image";
 import React, { useContext, useEffect, useState } from "react";
 import { Bet } from "@/interfaces/bet";
 import { DataContext } from "./dashboard-wrapper";
+import { calculateGameSeconds } from "../api/live-games/calculateGameSeconds";
 
 const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
-  const { dataLoaded, setUserBets, resetBet } = useContext(DataContext);
+  const { dataLoaded, setUserBets, userBets, gameTime } =
+    useContext(DataContext);
   const [selected, setSelected] = useState("");
+  const gameSeconds = calculateGameSeconds(gameTime);
+  const gameMaxBettingTime = 300;
 
+  // Update selected state based on userBets from context
   useEffect(() => {
-    if (resetBet) {
+    const betKey = type.toLowerCase() as "kills" | "deaths" | "cs" | "assists";
+    const currentSelection = userBets[betKey];
+    if (currentSelection && currentSelection !== "NONE") {
+      setSelected(currentSelection);
+    } else {
       setSelected("");
     }
-  }, [resetBet]);
+  }, [userBets, type]);
 
   const handleBetSelection = (betType: "LESS" | "MORE") => {
-    const betKey = type.toLowerCase();
+    // Don't allow selection if betting window has closed
+    if (gameSeconds >= gameMaxBettingTime) return; // 300 seconds = 5 minutes
+
+    const betKey = type.toLowerCase() as "kills" | "deaths" | "cs" | "assists";
     if (selected === "") {
       setSelected(betType);
-      setUserBets((prevBets) => {
-        // Add the new bet to the array
-        return [...prevBets, { [betKey]: betType }];
-      });
+      setUserBets((prevBets) => ({
+        ...prevBets,
+        [betKey]: betType,
+      }));
     } else if (selected === betType) {
       setSelected("");
-      setUserBets((prevBets) => {
-        // Remove the bet from the array
-        return prevBets.filter((bet) => Object.keys(bet)[0] !== betKey);
-      });
+      setUserBets((prevBets) => ({
+        ...prevBets,
+        [betKey]: "NONE",
+      }));
     } else {
-      if (selected === "MORE") {
-        setSelected("LESS");
-      } else {
-        setSelected("MORE");
-        setUserBets((prevBets) => {
-          // Remove the previous bet of the other type
-          const updatedBets = prevBets.filter(
-            (bet) => Object.keys(bet)[0] !== betKey
-          );
-          // Add the new bet to the array
-          return [...updatedBets, { [betKey]: betType }];
-        });
-      }
+      setSelected(betType);
+      setUserBets((prevBets) => ({
+        ...prevBets,
+        [betKey]: betType,
+      }));
     }
   };
 
@@ -57,7 +61,7 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
           height={128}
           className="rounded-full mb-4 mx-auto"
         />
-        <h2 className="text-xl font-bold flex justify-center item-center mb-2">
+        <h2 className="text-xl font-bold flex justify-center item-center text-center text-nowrap mb-2">
           {playerName}
         </h2>
 
@@ -78,20 +82,38 @@ const BetCard: React.FC<Bet> = ({ playerName, stat, type, playerImage }) => {
         {/* Buttons */}
         <div className="absolute bottom-0 left-0 w-full h-12 flex">
           <button
-            className={`flex-1 bg-gray-900 text-white ${selected === "LESS" ? "bg-red-700" : ""} 
-            tracking-tighter font-bold hover: transition-colors duration-500 ease-in-out`}
+            className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
+              gameSeconds >= gameMaxBettingTime
+                ? "bg-gray-600 cursor-not-allowed"
+                : `bg-gray-900 ${selected === "LESS" ? "bg-red-700" : ""} hover:bg-red-600`
+            }`}
             onClick={() => {
               handleBetSelection("LESS");
             }}
+            disabled={gameSeconds >= gameMaxBettingTime}
+            title={
+              gameSeconds >= gameMaxBettingTime
+                ? "Betting closed after 5 minutes"
+                : ""
+            }
           >
             Less
           </button>
           <button
-            className={`flex-1 bg-gray-900 text-white ${selected === "MORE" ? "bg-green-700" : ""}
-                    tracking-tighter font-bold hover: transition-colors duration-500 ease-in-out`}
+            className={`flex-1 text-white tracking-tighter font-bold transition-colors duration-500 ease-in-out ${
+              gameSeconds >= gameMaxBettingTime
+                ? "bg-gray-600 cursor-not-allowed"
+                : `bg-gray-900 ${selected === "MORE" ? "bg-green-700" : ""} hover:bg-green-600`
+            }`}
             onClick={() => {
               handleBetSelection("MORE");
             }}
+            disabled={gameSeconds >= gameMaxBettingTime}
+            title={
+              gameSeconds >= gameMaxBettingTime
+                ? "Betting closed after 5 minutes"
+                : ""
+            }
           >
             More
           </button>

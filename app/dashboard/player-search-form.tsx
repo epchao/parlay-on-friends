@@ -44,7 +44,7 @@ export default function PlayerSearchForm() {
           <Input
             id="playerName"
             type="text"
-            placeholder="Enter player name (e.g. meimei)"
+            placeholder="Enter riot player name (e.g. Faker)"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -60,7 +60,7 @@ export default function PlayerSearchForm() {
           <Input
             id="playerTag"
             type="text"
-            placeholder="Enter tag (e.g. tea)"
+            placeholder="Enter player tag (e.g. NA)"
             value={playerTag}
             onChange={(e) => setPlayerTag(e.target.value)}
             onKeyPress={handleKeyPress}

@@ -4,6 +4,7 @@ import { Player } from "@/interfaces/player";
 import Image from "next/image";
 import { useEffect, useState, useContext, useRef } from "react";
 import { calculateGameTime } from "../api/live-games/calculateGametime";
+import { calculateGameSeconds } from "../api/live-games/calculateGameSeconds";
 import { DataContext } from "./dashboard-wrapper";
 import { createClient } from "@/utils/supabase/client";
 
@@ -18,12 +19,22 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   const [allies, setAllies] = useState<Player[]>([]);
   const [allyColor, setAllyColor] = useState("");
   const [enemies, setEnemies] = useState<Player[]>([]);
-  const [time, setTime] = useState(0);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { dataLoaded, setDataLoaded, playerDetails, setPlayerDetails } =
-    useContext(DataContext);
+  const {
+    dataLoaded,
+    setDataLoaded,
+    playerDetails,
+    setPlayerDetails,
+    loadExistingBets,
+    gameTime,
+    setGameTime,
+  } = useContext(DataContext);
+
+  const gameSeconds = calculateGameSeconds(gameTime);
+  const gameTimeFormatted = calculateGameTime(gameTime);
+  const gameMaxBettingTime = 300;
+  const supabase = createClient();
 
   // Function to create JSX for teams
   const mapTeam = (team: Player[], isCurrentInTeam: boolean) => {
@@ -53,27 +64,25 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
       try {
         // First, try the cached API
-        let response = await fetch(
-          `/api/live-games?riotId=${name}&tag=${tag}`
-        );
+        let response = await fetch(`/api/live-games?riotId=${name}&tag=${tag}`);
 
         // If player not found in cache, register them first
         if (response.status === 404) {
-          console.log('Player not in cache or not in game, registering to fetch fresh data...');
+          console.log(
+            "Player not in cache or not in game, registering to fetch fresh data..."
+          );
           // Keep loading state active during registration
-          
-          const registerResponse = await fetch('/api/players/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ riotId: name, tag: tag })
+
+          const registerResponse = await fetch("/api/players/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ riotId: name, tag: tag }),
           });
 
           if (registerResponse.ok) {
-            console.log('Player registered, trying cached API again...');
+            console.log("Player registered, trying cached API again...");
             // Try the cached API again after registration
-            response = await fetch(
-              `/api/live-games?riotId=${name}&tag=${tag}`
-            );
+            response = await fetch(`/api/live-games?riotId=${name}&tag=${tag}`);
           } else {
             setError("Failed to register player. Please try again.");
             return;
@@ -83,7 +92,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         if (!response.ok) {
           if (response.status === 404) {
             const errorData = await response.json();
-            if (errorData.error === 'Player not currently in game') {
+            if (errorData.error === "Player not currently in game") {
               setError("This player is currently not in game.");
             } else {
               setError("Player not found in system.");
@@ -99,13 +108,22 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
         // Handle the response data
         setCurrentPlayer(data.currentPlayer);
         setPlayerDetails([data.currentPlayer, data.currentPlayerAverages]);
-        setTime(data.gameTime);
+        setGameTime(data.gameTime);
         setAllyColor(data.allyColor);
         setAllies(data.allies);
         setEnemies(data.enemies);
         setDataLoaded(true);
         setError(null);
         initialFetchDone.current = true;
+
+        // Load existing bets for this user and player
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user && data.currentPlayer?.puuid) {
+          await loadExistingBets(user.id, data.currentPlayer.puuid);
+        }
       } catch (err) {
         console.error("Error fetching player data", err);
         setError("Error fetching player data");
@@ -124,27 +142,27 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
 
     // Subscribe to real-time changes in live_games table
     const supabase = createClient();
-    
+
     const subscription = supabase
-      .channel('live_games_changes')
+      .channel("live_games_changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'live_games',
-          filter: `player_id=eq.${currentPlayer.puuid}`
+          event: "UPDATE",
+          schema: "public",
+          table: "live_games",
+          filter: `player_id=eq.${currentPlayer.puuid}`,
         },
         (payload: any) => {
-          console.log('Live game status changed:', payload);
-          
+          console.log("Live game status changed:", payload);
+
           // If the game status changed to completed, reset the UI
-          if (payload.new.status === 'completed') {
-            console.log('Game completed, resetting UI...');
-            
+          if (payload.new.status === "completed") {
+            console.log("Game completed, resetting UI...");
+
             setCurrentPlayer(null);
             setPlayerDetails([]);
-            setTime(0);
+            setGameTime(0);
             setAllyColor("");
             setAllies([]);
             setEnemies([]);
@@ -164,7 +182,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   // Set interval to tick up every second
   useEffect(() => {
     const timerInterval = setInterval(() => {
-      setTime((prevTime) => prevTime + 1);
+      setGameTime((prevTime: number) => prevTime + 1);
     }, 1000);
 
     // Clear interval when component unmounts
@@ -179,9 +197,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
   return (
     <>
       {/* Main Container */}
-      <main className="bg-gray-700 min-w-[90dvw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm xl:text-base">
+      <main className="bg-gray-700 min-w-[85vw] grid grid-cols-1 grid-rows-12 rounded-lg text-xs mx-6 lg:grid-cols-12 lg:text-sm xl:text-base ">
         {/* Player info container */}
-        <section className="bg-gray-800 m-3 row-s n-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
+        <section className="bg-gray-800 m-3 row-span-5 n-4 rounded-xl flex flex-col justify-evenly lg:col-span-4 lg:row-span-12 2xl:justify-center 2xl:gap-16">
           {/* Player icon */}
           <div className="flex flex-col items-center">
             <div className="relative mb-6 sm:mb-4 lg:mb-6 xl:mb-8">
@@ -196,7 +214,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
                 {currentPlayer.level}
               </p>
             </div>
-            <p className="text-base lg:text-2xl xl:text-4xl">
+            <p className="text-base lg:text-2xl xl:text-4xl text-center">
               {currentPlayer.name} #{currentPlayer.tag}
             </p>
           </div>
@@ -253,10 +271,23 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ name, tag }) => {
             />
           </div>
           {/* Game data */}
-          <div className="">
+          <div>
+            {/* Betting Window Status */}
+            <div
+              className={`py-2 px-3 font-bold text-center ${gameSeconds < gameMaxBettingTime ? "bg-green-600" : "bg-red-600"}`}
+            >
+              {gameSeconds < gameMaxBettingTime ? (
+                <span>
+                  Betting Open: {gameMaxBettingTime - gameSeconds} seconds
+                  remaining
+                </span>
+              ) : (
+                <span>Betting Closed</span>
+              )}
+            </div>
             {/* Time */}
             <p className="bg-gray-600 py-2 font-bold">
-              Game Time: {calculateGameTime(time)}
+              Game Time: {gameTimeFormatted}
             </p>
             {/* Blue Team Table */}
             <div>
