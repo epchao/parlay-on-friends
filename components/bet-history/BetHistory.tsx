@@ -26,17 +26,15 @@ export default function BetHistory() {
 function ActionButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [newBetCount, setNewBetCount] = useState(0);
-
   const supabase = createClient();
+
   useEffect(() => {
     const channel = supabase
       .channel("bets-updates")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "bets" },
-        (payload) => {
-          setNewBetCount((prev) => prev + 1);
-        }
+        () => setNewBetCount((prev) => prev + 1)
       )
       .on(
         "postgres_changes",
@@ -44,11 +42,15 @@ function ActionButton() {
         (payload) => {
           const wasUnprocessed = payload.old.processed_at === null;
           const isNowProcessed = payload.new.processed_at !== null;
-
           if (wasUnprocessed && isNowProcessed) {
             setNewBetCount((prev) => prev + 1);
           }
         }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "bets" },
+        () => setNewBetCount((prev) => (prev > 0 ? prev - 1 : 0)) // Never go below 0
       )
       .subscribe();
 
@@ -139,7 +141,7 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
         ) : bets.length === 0 ? (
           <p>You haven't made any bets yet!</p>
         ) : (
-          <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
+          <div className="overflow-x-auto overflow-y-auto max-h-[300px]">
             <table className="w-full text-sm">
               <thead>
                 <tr>
@@ -158,7 +160,7 @@ function BetPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
               </thead>
               <tbody>
                 {bets.map((bet) => (
-                  <tr key={bet.id}>
+                  <tr key={bet.id} className="text-center">
                     <td className="px-4 py-2">{bet.live_game_id}</td>
                     <td className="px-4 py-2">
                       {new Date(bet.created_at + "Z").toLocaleString([], {
